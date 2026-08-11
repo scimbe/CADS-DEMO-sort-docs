@@ -22,14 +22,26 @@ page's link carries).
 
 ### Step 2: accept terms, land on the portal
 
-Keycloak's registration form, then the one-time terms-and-conditions accept step, then straight
-into `/portal/home`.
+Keycloak's registration form, filled in for real:
+
+![Registration form, filled in](../assets/02-register-form-filled.png)
+
+Then the one-time terms-and-conditions accept step, then straight into `/portal/home`, signed in
+as the new account:
+
+![New account, signed in](../assets/03-new-account-signed-in.png)
 
 ### Step 3: the auto-provisioned tunnel
 
 `/portal/tunnels` auto-provisions one free tunnel per account —
-`site-bea1a24d.bunsenbrenner.org` in this run. The Install page shows a single-use
-`CT_AGENT_JOIN_TOKEN` and a persistent `CT_AGENT_TOKEN` (shown once, copy it immediately).
+`site-bea1a24d.bunsenbrenner.org` in this run:
+
+![New account's tunnels page](../assets/04-new-account-tunnels-page.png)
+
+The Install page shows a single-use `CT_AGENT_JOIN_TOKEN` and a persistent `CT_AGENT_TOKEN`
+(shown once, copy it immediately):
+
+![Install page, join and persistent tokens](../assets/05-new-tunnel-install-tokens.png)
 
 ### Step 4: bring the tunnel up
 
