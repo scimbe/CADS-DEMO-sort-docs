@@ -167,6 +167,31 @@ Sort Participant 1 — online
 
 ![New tunnel, connected]({{ '/assets/06-new-tunnel-connected.png' | relative_url }})
 
+### What this tunnel is not (yet): the actual sort-handler serving mechanism
+
+This tunnel and the curl check above prove the account/tunnel machinery works — they don't, by
+themselves, connect your stdin/stdout handler to the arena. Two genuinely separate mesh
+subsystems are involved here, not one:
+
+- **This tunnel** (`CT_AGENT_ORIGIN=127.0.0.1:18081 CT_AGENT_ORIGIN_PROTO=tcp`, mesh edge port
+  4433) is a raw TCP/HTTP proxy: it forwards incoming connections byte-for-byte to whatever is
+  listening on `127.0.0.1:18081`. It has no concept of "one JSON object in, one JSON object out"
+  at all — that's not what it's for.
+- **Agent-Fabric Channels** (broker/relay ports 4435/4436 — a different mesh subsystem entirely)
+  are what `CT_AGENT_SERVICE_HANDLER_CMD` belongs to: point it at your `handler.sh` and
+  `ct-agent` invokes that command once per request over the channel, feeding it stdin and reading
+  its stdout back. *That's* the actual stdin/stdout-shaped bridge the move protocol expects — it's
+  what the "Honest status" section above is describing, and it's what a real self-service join
+  will eventually route through.
+
+As of today, **neither path is what actually gets your handler running live** on
+`sort.bunsenbrenner.org`. See Step 3 below: a human operator copies your verified handler
+directly into the bridge's own participant list, and the bridge runs it as a local subprocess on
+the bridge host — no tunnel or channel involved yet, for either of them. Step 0's tunnel is real,
+working infrastructure and worth doing regardless, but don't expect it to be what makes your
+handler reachable today; that's tracked in
+[CADS-DEMO-sort#9](https://github.com/scimbe/CADS-DEMO-sort/issues/9).
+
 ## Step 1 — Write a handler that honors the move contract
 
 The fastest and recommended path: run the **`sort-arena-harness`** skill from this repo with your
