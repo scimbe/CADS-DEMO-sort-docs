@@ -49,10 +49,11 @@ The Install page shows a single-use `CT_AGENT_JOIN_TOKEN` and a persistent `CT_A
 ### Step 4: get `ct-agent`, then bring the tunnel up
 
 **Get the binary first — there is no build step.** Download it for your platform from
-[the releases page](https://github.com/scimbe/ct-agent/releases/latest):
-`ct-agent-linux-x86_64`, `ct-agent-darwin-{x86_64,aarch64}`, or on Windows
-`ct-agent-windows-x86_64.exe` (confirmed working as of `v0.4.1`; make it executable on
-Linux/Mac with `chmod +x ct-agent-*`).
+[the latest release](https://github.com/scimbe/ct-agent/releases/latest) (always the current
+version, so nothing here goes stale by pinning a number in prose):
+`ct-agent-linux-x86_64`, `ct-agent-darwin-{x86_64,aarch64}` (make either executable with
+`chmod +x ct-agent-*`), or on Windows `ct-agent-windows-x86_64.exe` — no `chmod` equivalent
+needed there, a downloaded `.exe` just runs.
 
 `CT_AGENT_JOIN_TOKEN` and `CT_AGENT_TOKEN` come from the Install page (Step 3, above).
 `CT_AGENT_EDGE` and `CT_AGENT_EDGE_CERT_URL` were the two values with no explanation anywhere on
@@ -65,7 +66,13 @@ itself (`curl -s https://bunsenbrenner.org/pki/ca` returns the real cert directl
 
 **bash / Git Bash (Linux, macOS, Windows):**
 
+`CT_AGENT_STATE_DIR`/`CT_AGENT_CAPABILITY_OUT` must point at real, already-existing directories —
+without them, `ct-agent onboard` crashes immediately with `Os { code: 2, kind: NotFound }` rather
+than falling back to a sane default. Both blocks below create the directory first so that can't
+bite you.
+
 ```bash
+mkdir -p ~/ct-agent-state
 CT_AGENT_MODE=browser \
 CT_AGENT_JOIN_TOKEN=<from the Install page> CT_AGENT_TOKEN=<from the Install page> \
 CT_AGENT_ID=site-bea1a24d \
@@ -73,13 +80,14 @@ CT_AGENT_CP_URL=https://bunsenbrenner.org \
 CT_AGENT_EDGE=bunsenbrenner.org:4433 CT_AGENT_EDGE_CERT_URL=https://bunsenbrenner.org \
 CT_AGENT_HOSTNAME=site-bea1a24d.bunsenbrenner.org \
 CT_AGENT_ORIGIN=127.0.0.1:18081 CT_AGENT_ORIGIN_PROTO=tcp \
-CT_AGENT_STATE_DIR=/path/to/state CT_AGENT_CAPABILITY_OUT=/path/to/state/capability.bin \
+CT_AGENT_STATE_DIR=~/ct-agent-state CT_AGENT_CAPABILITY_OUT=~/ct-agent-state/capability.bin \
 ./ct-agent onboard
 ```
 
 **PowerShell:**
 
 ```powershell
+New-Item -ItemType Directory -Force "$HOME\ct-agent-state" | Out-Null
 $env:CT_AGENT_MODE = "browser"
 $env:CT_AGENT_JOIN_TOKEN = "<from the Install page>"
 $env:CT_AGENT_TOKEN = "<from the Install page>"
@@ -90,15 +98,10 @@ $env:CT_AGENT_EDGE_CERT_URL = "https://bunsenbrenner.org"
 $env:CT_AGENT_HOSTNAME = "site-bea1a24d.bunsenbrenner.org"
 $env:CT_AGENT_ORIGIN = "127.0.0.1:18081"
 $env:CT_AGENT_ORIGIN_PROTO = "tcp"
-$env:CT_AGENT_STATE_DIR = "C:\path\to\state"
-$env:CT_AGENT_CAPABILITY_OUT = "C:\path\to\state\capability.bin"
+$env:CT_AGENT_STATE_DIR = "$HOME\ct-agent-state"
+$env:CT_AGENT_CAPABILITY_OUT = "$HOME\ct-agent-state\capability.bin"
 .\ct-agent-windows-x86_64.exe onboard
 ```
-
-The two env vars that are easy to miss regardless of shell: `CT_AGENT_STATE_DIR` and
-`CT_AGENT_CAPABILITY_OUT` must point at real, already-existing directories. Without them,
-`ct-agent onboard` crashes immediately with `Os { code: 2, kind: NotFound }` — it does not fall
-back to a sane default path.
 
 ### Step 5: confirm it's live
 

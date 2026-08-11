@@ -164,13 +164,21 @@ budget. It never touches the network, so it costs you nothing but model calls:
 
 ```python
 #!/usr/bin/env python3
-"""Dry-run a Sort Arena handler locally:  python3 dryrun.py ./handler.sh [budget]
-   (Windows: python dryrun.py ./handler.sh [budget], from a Git Bash shell)"""
-import json, random, subprocess, sys
+"""Dry-run a Sort Arena handler locally:
+     python3 dryrun.py ./handler.sh [budget] [array]
+   array is optional, comma-separated (e.g. 5,3,8,1,9,2) -- reproduces an exact run instead of a
+   fresh random one each time, e.g. to check this doc's own numbers against your own handler:
+     python3 dryrun.py ./handler.sh 30 5,3,8,1,9,2
+   (Windows: python dryrun.py ./handler.sh [budget] [array], from a Git Bash shell)"""
+import functools, json, random, subprocess, sys
+
+print = functools.partial(print, flush=True)  # a real LLM round takes seconds; unbuffered output
+                                                # is the difference between "running" and "frozen"
 
 HANDLER = sys.argv[1]
 BUDGET = int(sys.argv[2]) if len(sys.argv) > 2 else 60
-array = [random.randint(0, 99) for _ in range(8)]
+array = [int(x) for x in sys.argv[3].split(",")] if len(sys.argv) > 3 \
+    else [random.randint(0, 99) for _ in range(8)]
 print("start:", array)
 
 # Launched via `bash` explicitly, not exec'd directly: Windows has no shebang support and
