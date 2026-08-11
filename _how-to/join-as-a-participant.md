@@ -240,14 +240,35 @@ print("start:", array)
 # cannot run a .sh file as a subprocess argv[0] at all (CADS-DEMO-sort-docs#1) -- `bash` is
 # assumed on PATH (Git Bash on Windows, native everywhere else), matching every handler's own
 # #!/usr/bin/env bash shebang.
-history, faults = [], 0
+#
+# `faults` and `errors` are deliberately separate counters (CADS-DEMO-sort-docs#4): a fault is
+# the HANDLER breaking the contract (bad JSON, unknown action, out-of-range indices) -- exactly
+# what docs/protocol.md scores. An error is the ENVIRONMENT failing around it (a timed-out call,
+# an LLM CLI that returned nothing because it hit a rate limit) -- nothing to do with your
+# harness. A long run against a real LLM can hit real rate limits; if you see a wall of `errors`
+# with the array untouched, that's your machine/quota having a bad minute, not your handler being
+# broken -- re-run once things calm down rather than rewriting a harness that was fine.
+history, faults, errors = [], 0, 0
 for rnd in range(1, BUDGET + 1):
     payload = {"round": rnd, "array": array, "history": history[-20:],
                "budgetRemaining": BUDGET - rnd + 1, "mode": "solo", "you": "dryrun"}
     try:
-        out = subprocess.run(["bash", HANDLER], input=json.dumps(payload), capture_output=True,
-                             text=True, timeout=30).stdout
-        move = json.loads(out)
+        proc = subprocess.run(["bash", HANDLER], input=json.dumps(payload), capture_output=True,
+                              text=True, timeout=30)
+    except subprocess.TimeoutExpired:
+        errors += 1
+        print(f"round {rnd}: ERROR (handler timed out)")
+        continue
+
+    if not proc.stdout.strip():
+        errors += 1
+        detail = proc.stderr.strip()
+        print(f"round {rnd}: ERROR (handler produced no output, exit {proc.returncode})" +
+              (f" -- stderr: {detail}" if detail else ""))
+        continue
+
+    try:
+        move = json.loads(proc.stdout)
         act = move["action"]
         if act == "done":
             ok = array == sorted(array)
@@ -262,19 +283,21 @@ for rnd in range(1, BUDGET + 1):
             array[i], array[j] = array[j], array[i]
         history.append({"round": rnd, "action": act, "i": i, "j": j, "resultArray": list(array)})
     except Exception as e:
+        # The handler DID produce output at this point (checked above), so a parse/shape
+        # failure here really is the handler's own contract violation, not the environment's.
         faults += 1
         print(f"round {rnd}: FAULT ({type(e).__name__}: {e})")
 else:
     print(f"budget exhausted, still {array}")
 
-print(f"rounds={len(history)} faults={faults} sorted={array == sorted(array)}")
+print(f"rounds={len(history)} faults={faults} errors={errors} sorted={array == sorted(array)}")
 ```
 
 Run it against the non-LLM baseline first, so you know the harness around *you* is what's being
 measured:
 
 ```bash
-python3 dryrun.py ./handlers/reference-sorter.sh    # always faults=0 sorted=True
+python3 dryrun.py ./handlers/reference-sorter.sh    # always faults=0 errors=0 sorted=True
 python3 dryrun.py ./handler.sh                      # now yours
 ```
 
@@ -286,7 +309,9 @@ python dryrun.py ./handler.sh
 ```
 
 You are ready to go live when `faults=0` and `sorted=True`. Beating the reference sorter's
-`rounds` is the actual game — the baseline is deliberately simple and explainable, not fast.
+`rounds` is the actual game — the baseline is deliberately simple and explainable, not fast. A
+nonzero `errors` count on an otherwise-good run isn't a verdict on your handler at all — re-run to
+confirm before you read anything into it.
 
 **If your handler is generated code** (the recommended path, via the `sort-arena-harness` skill):
 run `dryrun.py` **twice** against the exact same array (its third argument fixes the seed instead
