@@ -13,9 +13,12 @@ honors the move contract, verify it before you go live, and confirm you're visib
 ## Before you begin
 
 - **Python 3** — the verification script in Step 2 needs it. On Windows the launcher is `python`
-  or `py -3`, **not** `python3` (that name is a Microsoft Store alias stub that does nothing
-  useful) — every command below that says `python3` works as `python` instead. The handler
-  scripts shown here already detect this themselves (`command -v python3 || command -v python`).
+  or `py -3`, **not** `python3`. That name is a real, *executable* Microsoft Store alias stub
+  that sits on PATH in every default Windows install — it only fails once you actually run it,
+  which is why a naive `command -v python3` check reports success and picks the broken stub
+  anyway. Every command below that says `python3` works as `python` instead; the handler scripts
+  shown here probe by actually running each candidate (`python3`, `python`, `py`) rather than by
+  checking presence on PATH, specifically because of this.
 - **A bash-compatible shell** to run the `.sh` handler scripts. On Windows this means
   [Git for Windows](https://git-scm.com/downloads/win) (which bundles Git Bash) — run everything
   in this guide from a **Git Bash** window, not PowerShell or `cmd.exe`. Native Windows can't
