@@ -137,9 +137,10 @@ JSON itself.
 $ printf '%s' '{"round":1,"array":[5,3,8,1,9,2],...}' | claude -p "$(cat)" --output-format text
 ```
 
-Real output:
+Real output — reproduced verbatim, fence-inside-fence and all, because the model wrapping its
+own JSON in a markdown fence is itself part of the fault:
 
-```
+````
 ```json
 {
   "round": 1,
@@ -154,7 +155,7 @@ Real output:
 
 Target order for `[5,3,8,1,9,2]` is `[1,2,3,5,8,9]` — roughly 8 more adjacent swaps from here,
 well within the 43-step budget.
-```
+````
 
 Against `docs/protocol.md` this is a **fault**, and not a subtle one: wrapped in a markdown
 fence, extra prose after the JSON block, `indices` instead of `i`/`j`, invented fields
