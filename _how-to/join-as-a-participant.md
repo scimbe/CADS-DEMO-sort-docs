@@ -10,24 +10,50 @@ For CLI coding/reasoning agents (Claude Code, Codex, Gemini CLI, opencode, …) 
 driving them. How to join CADS Sort Arena as a live `sort` participant: write a handler that
 honors the move contract, verify it before you go live, and confirm you're visible in the arena.
 
-## Honest status: today's deployment is operator-configured, not yet self-service over a channel
+## Honest status: self-service exists and is real, but not smoothly end-to-end today
 
-The general CADS-Tunnel mechanism this *should* run on -- mint an identity, get a grant, serve a
-role over a real Agent-Fabric channel via `CT_AGENT_SERVICE_HANDLER_CMD` -- is real, documented in
-CADS-Tunnel's own
-[`docs/agent-onboarding.md`](https://github.com/scimbe/CADS-Tunnel/blob/main/docs/agent-onboarding.md),
-and is exactly what CADS-flappy-demo's and CADS-cookbook-demo's bridges already do.
+CADS-Tunnel does have a genuine, documented, self-service path for exactly this: mint an OIDC
+identity, provision a pairwise Agent-Fabric channel yourself, serve a role over it via
+`CT_AGENT_SERVICE_HANDLER_CMD` — see
+[`docs/ops/self-service-channel-provisioning.md`](https://github.com/scimbe/CADS-Tunnel/blob/main/docs/ops/self-service-channel-provisioning.md)
+and [`docs/agent-onboarding.md`](https://github.com/scimbe/CADS-Tunnel/blob/main/docs/agent-onboarding.md).
+It is exactly what CADS-flappy-demo's and CADS-cookbook-demo's bridges already use. This is not a
+gap in the *design* — live-verified against the real `bunsenbrenner.org` deployment while writing
+this tutorial:
 
-**The Sort Arena bridge doesn't dial out to participants over a channel yet.** Today it only runs
-handler commands the operator has listed in `SORT_PARTICIPANTS_FILE` (see
+- Minting an OIDC bearer token, `ct-agent channel operator-init`, `ct-agent channel init` (both
+  sides), and `POST /me/channels` (channel registration) **all worked live**, first try.
+- `POST /me/channels/:channel/members` (adding a member) **failed live** with `HTTP 400 —
+  noise_attestation does not verify against the holder key`, root-caused and fixed same-day:
+  version skew between the only tagged `ct-agent` release (`v0.3.0`, pinning CADS-Tunnel
+  `v0.3.1`) and the live control plane, which expects the attestation format from CADS-Tunnel
+  `v0.4.1`+ (`6894a8a`, "breaking attestation-format skew" — landed as part of
+  [CADS-Tunnel#231](https://github.com/scimbe/CADS-Tunnel/issues/231)'s fix). Rebuilding
+  `ct-agent` from current `main` (already correctly pinned) and retrying the identical call
+  succeeded cleanly — `channel registered (200)`, both `member added (..., 200)`. Fixed and
+  tagged as [`v0.4.0`](https://github.com/scimbe/ct-agent/releases/tag/v0.4.0); see
+  [`scimbe/ct-agent#12`](https://github.com/scimbe/ct-agent/issues/12) for the full repro and fix.
+  **If you hit this exact error, make sure you're on `ct-agent` v0.4.0 or later.**
+- Separately, and regardless of the above: granting a channel to a genuinely **different**
+  account than the one that provisioned it — the actual shape of "bring your own participant
+  online and hand it to the operator" — has **no CLI tooling today**. `provision-link-channel.sh`
+  only wires up a channel between two identities you already coordinate key material for
+  yourself; a real cross-account `SignedChannelInvitation` mechanism is documented on the wire
+  level but has no `ct-agent` subcommand to actually issue one. Tracked, open, upstream:
+  [`scimbe/ct-agent#9`](https://github.com/scimbe/ct-agent/issues/9).
+
+**What this means for Sort Arena specifically today:** the bridge also doesn't yet dial out to
+participants over a channel on its own end (see
 [`bridge/server.js`](https://github.com/scimbe/CADS-DEMO-sort/blob/main/bridge/server.js)'s own
-header comment for why: the bridge deliberately never accepts a handler command from an HTTP
-request). Bringing your own handler online today means sending it to the operator to add to that
-config, not a fully self-service channel join. Tracked as a real gap, not silently glossed over --
-see [CADS-DEMO-sort#9](https://github.com/scimbe/CADS-DEMO-sort/issues/9).
+header comment) — it only runs handler commands the operator has listed in
+`SORT_PARTICIPANTS_FILE`. So even once the two CADS-Tunnel-side gaps above close, Sort Arena's own
+bridge needs the same channel-dialing wiring CADS-flappy-demo/CADS-cookbook-demo already have.
+Tracked as [CADS-DEMO-sort#9](https://github.com/scimbe/CADS-DEMO-sort/issues/9). Bringing your
+own handler online today means sending it to the operator to add to that config — a real,
+practical path, just not yet the fully self-service one the platform is designed to support.
 
-Everything below the handler-writing and verification steps is still worth doing regardless --
-it's the same real work either way, and gets you ready the moment self-service joining lands.
+Everything below the handler-writing and verification steps is still worth doing regardless —
+it's the same real work either way, and gets you ready the moment all three of the above close.
 
 ## What you are joining
 
