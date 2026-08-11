@@ -14,9 +14,12 @@ described from memory.
 
 ### Step 1: register
 
-A brand-new participant account was registered directly through the real login page's own
-"Register" link (not a bare `/registration` URL — that 400s without the OAuth params the login
-page's link carries).
+Start at **[bunsenbrenner.org/portal](https://bunsenbrenner.org/portal)** — that's the one URL
+worth memorizing here. It redirects to a fresh Keycloak sign-in page carrying the OAuth
+parameters (`tab_id`, `client_data`, `state`) that page needs; those are minted per-visit, so a
+copied `/realms/.../registration?...` URL from someone else's session (or from this page)
+will have gone stale. From the sign-in page, click **Register** — a brand-new participant
+account was registered exactly this way for this tutorial.
 
 ![Sign-in page](../assets/01-signin-page.png)
 
@@ -43,20 +46,56 @@ The Install page shows a single-use `CT_AGENT_JOIN_TOKEN` and a persistent `CT_A
 
 ![Install page, join and persistent tokens](../assets/05-new-tunnel-install-tokens.png)
 
-### Step 4: bring the tunnel up
+### Step 4: get `ct-agent`, then bring the tunnel up
+
+**Get the binary first — there is no build step.** Download it for your platform from
+[the releases page](https://github.com/scimbe/ct-agent/releases/latest):
+`ct-agent-linux-x86_64`, `ct-agent-darwin-{x86_64,aarch64}`, or on Windows
+`ct-agent-windows-x86_64.exe` (confirmed working as of `v0.4.1`; make it executable on
+Linux/Mac with `chmod +x ct-agent-*`).
+
+`CT_AGENT_JOIN_TOKEN` and `CT_AGENT_TOKEN` come from the Install page (Step 3, above).
+`CT_AGENT_EDGE` and `CT_AGENT_EDGE_CERT_URL` were the two values with no explanation anywhere on
+this page (CADS-DEMO-sort-docs#2) — real values, verified live: `CT_AGENT_EDGE` is the mesh
+edge's `host:port` (`4433` on this deployment — confirm against `GET
+https://bunsenbrenner.org/network-info`'s `mesh_edge_port` rather than hardcoding);
+`CT_AGENT_EDGE_CERT_URL` is just the control-plane base URL again — the client appends `/pki/ca`
+itself (`curl -s https://bunsenbrenner.org/pki/ca` returns the real cert directly, confirmed
+`200 application/x-x509-ca-cert`).
+
+**bash / Git Bash (Linux, macOS, Windows):**
 
 ```bash
 CT_AGENT_MODE=browser \
-CT_AGENT_JOIN_TOKEN=... CT_AGENT_TOKEN=... CT_AGENT_ID=site-bea1a24d \
+CT_AGENT_JOIN_TOKEN=<from the Install page> CT_AGENT_TOKEN=<from the Install page> \
+CT_AGENT_ID=site-bea1a24d \
 CT_AGENT_CP_URL=https://bunsenbrenner.org \
-CT_AGENT_EDGE=... CT_AGENT_EDGE_CERT_URL=... \
+CT_AGENT_EDGE=bunsenbrenner.org:4433 CT_AGENT_EDGE_CERT_URL=https://bunsenbrenner.org \
 CT_AGENT_HOSTNAME=site-bea1a24d.bunsenbrenner.org \
 CT_AGENT_ORIGIN=127.0.0.1:18081 CT_AGENT_ORIGIN_PROTO=tcp \
 CT_AGENT_STATE_DIR=/path/to/state CT_AGENT_CAPABILITY_OUT=/path/to/state/capability.bin \
 ./ct-agent onboard
 ```
 
-The two env vars that actually matter and are easy to miss: `CT_AGENT_STATE_DIR` and
+**PowerShell:**
+
+```powershell
+$env:CT_AGENT_MODE = "browser"
+$env:CT_AGENT_JOIN_TOKEN = "<from the Install page>"
+$env:CT_AGENT_TOKEN = "<from the Install page>"
+$env:CT_AGENT_ID = "site-bea1a24d"
+$env:CT_AGENT_CP_URL = "https://bunsenbrenner.org"
+$env:CT_AGENT_EDGE = "bunsenbrenner.org:4433"
+$env:CT_AGENT_EDGE_CERT_URL = "https://bunsenbrenner.org"
+$env:CT_AGENT_HOSTNAME = "site-bea1a24d.bunsenbrenner.org"
+$env:CT_AGENT_ORIGIN = "127.0.0.1:18081"
+$env:CT_AGENT_ORIGIN_PROTO = "tcp"
+$env:CT_AGENT_STATE_DIR = "C:\path\to\state"
+$env:CT_AGENT_CAPABILITY_OUT = "C:\path\to\state\capability.bin"
+.\ct-agent-windows-x86_64.exe onboard
+```
+
+The two env vars that are easy to miss regardless of shell: `CT_AGENT_STATE_DIR` and
 `CT_AGENT_CAPABILITY_OUT` must point at real, already-existing directories. Without them,
 `ct-agent onboard` crashes immediately with `Os { code: 2, kind: NotFound }` — it does not fall
 back to a sane default path.
