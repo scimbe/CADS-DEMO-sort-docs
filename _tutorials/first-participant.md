@@ -21,30 +21,30 @@ copied `/realms/.../registration?...` URL from someone else's session (or from t
 will have gone stale. From the sign-in page, click **Register** — a brand-new participant
 account was registered exactly this way for this tutorial.
 
-![Sign-in page](../assets/01-signin-page.png)
+![Sign-in page]({{ '/assets/01-signin-page.png' | relative_url }})
 
 ### Step 2: accept terms, land on the portal
 
 Keycloak's registration form, filled in for real:
 
-![Registration form, filled in](../assets/02-register-form-filled.png)
+![Registration form, filled in]({{ '/assets/02-register-form-filled.png' | relative_url }})
 
 Then the one-time terms-and-conditions accept step, then straight into `/portal/home`, signed in
 as the new account:
 
-![New account, signed in](../assets/03-new-account-signed-in.png)
+![New account, signed in]({{ '/assets/03-new-account-signed-in.png' | relative_url }})
 
 ### Step 3: the auto-provisioned tunnel
 
 `/portal/tunnels` auto-provisions one free tunnel per account —
 `site-bea1a24d.bunsenbrenner.org` in this run:
 
-![New account's tunnels page](../assets/04-new-account-tunnels-page.png)
+![New account's tunnels page]({{ '/assets/04-new-account-tunnels-page.png' | relative_url }})
 
 The Install page shows a single-use `CT_AGENT_JOIN_TOKEN` and a persistent `CT_AGENT_TOKEN`
 (shown once, copy it immediately):
 
-![Install page, join and persistent tokens](../assets/05-new-tunnel-install-tokens.png)
+![Install page, join and persistent tokens]({{ '/assets/05-new-tunnel-install-tokens.png' | relative_url }})
 
 ### Step 4: get `ct-agent`, then bring the tunnel up
 
@@ -113,7 +113,7 @@ That response only exists if the tunnel is genuinely carrying traffic end to end
 Agent-Fabric edge to the locally-running origin — nothing about it can be faked by the portal UI
 alone.
 
-![New tunnel, connected](../assets/06-new-tunnel-connected.png)
+![New tunnel, connected]({{ '/assets/06-new-tunnel-connected.png' | relative_url }})
 
 ## Part 2 — the same model, four levels of control
 
@@ -281,12 +281,12 @@ generalize.
 Live arena run against `bridge/server.js`, on the real `sort.bunsenbrenner.org` page, with
 `bubble-sort-claude` selected as the only solo-run participant:
 
-![Sort Arena, bubble-sort-claude selected](../assets/sort-arena-live-01-loaded.png)
+![Sort Arena, bubble-sort-claude selected]({{ '/assets/sort-arena-live-01-loaded.png' | relative_url }})
 
 A real 12-element array, run to completion — every `compare`/`swap` in the round timeline below
 is a real `claude` CLI call:
 
-![Sort Arena, bubble-sort-claude finished correctly](../assets/sort-arena-live-04-bubble-sort-complete.png)
+![Sort Arena, bubble-sort-claude finished correctly]({{ '/assets/sort-arena-live-04-bubble-sort-complete.png' | relative_url }})
 
 `comparisons: 29, swaps: 31, faults: 0, rounds: 61, wall: 506.5s, sorted: yes`. 61 rounds for a
 12-element array is real bubble-sort cost, not a harness problem — see "why this costs more
