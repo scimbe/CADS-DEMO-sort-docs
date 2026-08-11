@@ -34,13 +34,18 @@ this tutorial:
   tagged as [`v0.4.0`](https://github.com/scimbe/ct-agent/releases/tag/v0.4.0); see
   [`scimbe/ct-agent#12`](https://github.com/scimbe/ct-agent/issues/12) for the full repro and fix.
   **If you hit this exact error, make sure you're on `ct-agent` v0.4.0 or later.**
-- Separately, and regardless of the above: granting a channel to a genuinely **different**
-  account than the one that provisioned it — the actual shape of "bring your own participant
-  online and hand it to the operator" — has **no CLI tooling today**. `provision-link-channel.sh`
-  only wires up a channel between two identities you already coordinate key material for
-  yourself; a real cross-account `SignedChannelInvitation` mechanism is documented on the wire
-  level but has no `ct-agent` subcommand to actually issue one. Tracked, open, upstream:
-  [`scimbe/ct-agent#9`](https://github.com/scimbe/ct-agent/issues/9).
+- Separately: granting a channel to a genuinely **different** account than the one that
+  provisioned it — the actual shape of "bring your own participant online and hand it to the
+  operator" — had **no CLI tooling** until `ct-agent channel invite` landed in `v0.4.1`+
+  ([`scimbe/ct-agent#9`](https://github.com/scimbe/ct-agent/issues/9), fixed
+  2026-08-11). `provision-link-channel.sh`/`channel grant` still only wire up a channel between
+  two identities you already coordinate holder/noise key material for directly; `channel invite`
+  is the actual cross-account producer — sign an invitation for an identity you only know from,
+  e.g., a registry lookup or an out-of-band email, and the invitee redeems it against the
+  already-real receiving-side flow (`ct_common::channel::redeem_invitation`). Live-tested:
+  signed an invitation, decoded the CLI's own hex output, verified it for real under
+  `verify_invitation`, and confirmed domain separation (an invitation's signature does not
+  verify as a grant's) — see the commit linked from the issue for the exact repro.
 
 **What this means for Sort Arena specifically today:** the bridge also doesn't yet dial out to
 participants over a channel on its own end (see
