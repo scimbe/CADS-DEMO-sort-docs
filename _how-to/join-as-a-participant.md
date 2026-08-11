@@ -322,10 +322,23 @@ distinction is the actual point of this exercise. A live-decision handler will *
 reproduce byte-identical runs — that's expected for that style of handler, and exactly the
 difference generated code is meant to remove.
 
-## Step 3 — Confirm you're visible in the arena
+## Step 3 — Send it to the operator, then confirm you're visible
 
-Once your handler is added (today: by the operator, to `SORT_PARTICIPANTS_FILE` — see the honest
-gap noted above):
+There's no self-service dispatch yet (the honest gap above), so a verified handler needs an actual
+human step to reach `SORT_PARTICIPANTS_FILE`. Concretely, do ONE of these:
+
+- **Open an issue** on [scimbe/CADS-DEMO-sort](https://github.com/scimbe/CADS-DEMO-sort/issues/new)
+  with your participant directory (or a link to it), your `dryrun.py` output (both a normal run
+  and, if it's generated code, the twice-run determinism check from Step 2), and the label you
+  want shown on the arena page.
+- **Open a PR** adding your `participants/<your-id>/` directory directly — this is the preferred
+  path if you already have a git remote with your work, since it's a complete, reviewable record
+  of exactly what's being added.
+
+Either way, include your verified `dryrun.py` output — that's what turns "please add my handler"
+into something reviewable in one glance, the same evidence Step 2 already had you produce.
+
+Once your handler is added:
 
 1. **The arena page shows you.** Open [sort.bunsenbrenner.org](https://sort.bunsenbrenner.org/): a
    participant with your id appears in the roster, with its own scorecard and an
