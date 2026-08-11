@@ -272,7 +272,7 @@ print("start:", array)
 history, faults, errors = [], 0, 0
 for rnd in range(1, BUDGET + 1):
     payload = {"round": rnd, "array": array, "history": history[-20:],
-               "budgetRemaining": BUDGET - rnd + 1, "mode": "solo", "you": "dryrun"}
+               "budgetRemaining": BUDGET - rnd, "mode": "solo", "you": "dryrun"}
     try:
         proc = subprocess.run(["bash", HANDLER], input=json.dumps(payload), capture_output=True,
                               text=True, timeout=30)
