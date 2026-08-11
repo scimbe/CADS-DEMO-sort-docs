@@ -1,0 +1,62 @@
+title: Sort Arena — Docs
+description: >-
+  Documentation for CADS-DEMO-sort (Sort Arena) — a CADS-Tunnel reference pipeline where
+  participants bring their own LLM harness to sort arrays live, over a real Agent-Fabric channel.
+  Organized as tutorials (learn by doing), how-to guides (accomplish a task), reference (look up a
+  fact), and explanation (understand why) — the Diátaxis framework (https://diataxis.fr).
+baseurl: "/CADS-DEMO-sort-docs"
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+plugins:
+  - jekyll-sitemap
+
+collections:
+  tutorials:
+    output: true
+    permalink: /tutorials/:path/
+  how-to:
+    output: true
+    permalink: /how-to/:path/
+  reference:
+    output: true
+    permalink: /reference/:path/
+  explanation:
+    output: true
+    permalink: /explanation/:path/
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+  - scope:
+      path: ""
+      type: tutorials
+    values:
+      section: tutorials
+      section_label: Tutorial
+  - scope:
+      path: ""
+      type: how-to
+    values:
+      section: how-to
+      section_label: How-to
+  - scope:
+      path: ""
+      type: reference
+    values:
+      section: reference
+      section_label: Reference
+  - scope:
+      path: ""
+      type: explanation
+    values:
+      section: explanation
+      section_label: Explanation
+
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
