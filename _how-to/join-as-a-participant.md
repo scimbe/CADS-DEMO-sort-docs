@@ -98,10 +98,65 @@ and it renders on screen as comparison counts, swap counts, fault rates, and fin
 | Known-good baseline | [`handlers/reference-sorter.sh`](https://github.com/scimbe/CADS-DEMO-sort/blob/main/handlers/reference-sorter.sh) — real insertion sort, no LLM |
 | Starter kits | [`templates/`](https://github.com/scimbe/CADS-DEMO-sort/tree/main/templates) — Claude Code, Codex, Gemini CLI, opencode |
 
+## Step 0 — mint an account and bring up your tunnel
+
+Your handler needs somewhere to actually run and be reachable from. Start at
+**[bunsenbrenner.org/portal](https://bunsenbrenner.org/portal)** — that's the one URL worth
+memorizing. It redirects to a Keycloak sign-in page; click **Register**, accept the one-time
+terms, and you land on `/portal/home` signed in as a brand-new account.
+
+![Sign-in page]({{ '/assets/01-signin-page.png' | relative_url }})
+![Registration form, filled in]({{ '/assets/02-register-form-filled.png' | relative_url }})
+![New account, signed in]({{ '/assets/03-new-account-signed-in.png' | relative_url }})
+
+`/portal/tunnels` auto-provisions one free tunnel per account. Its Install page shows a
+single-use `CT_AGENT_JOIN_TOKEN` and a persistent `CT_AGENT_TOKEN` (shown once — copy it
+immediately):
+
+![New account's tunnels page]({{ '/assets/04-new-account-tunnels-page.png' | relative_url }})
+![Install page, join and persistent tokens]({{ '/assets/05-new-tunnel-install-tokens.png' | relative_url }})
+
+Get `ct-agent` for your platform from [the latest release](https://github.com/scimbe/ct-agent/releases/latest)
+— no build step. `chmod +x` it on Linux/macOS; on Windows a downloaded `.exe` just runs.
+`CT_AGENT_EDGE` is the mesh edge's `host:port` (confirm against `GET
+https://bunsenbrenner.org/network-info`'s `mesh_edge_port`); `CT_AGENT_EDGE_CERT_URL` is the
+control-plane base URL — the client appends `/pki/ca` itself. `CT_AGENT_STATE_DIR` and
+`CT_AGENT_CAPABILITY_OUT` must point at directories that already exist, or `ct-agent onboard`
+crashes immediately.
+
+```bash
+mkdir -p ~/ct-agent-state
+CT_AGENT_MODE=browser \
+CT_AGENT_JOIN_TOKEN=<from the Install page> CT_AGENT_TOKEN=<from the Install page> \
+CT_AGENT_ID=<your tunnel id> \
+CT_AGENT_CP_URL=https://bunsenbrenner.org \
+CT_AGENT_EDGE=bunsenbrenner.org:4433 CT_AGENT_EDGE_CERT_URL=https://bunsenbrenner.org \
+CT_AGENT_HOSTNAME=<your tunnel id>.bunsenbrenner.org \
+CT_AGENT_ORIGIN=127.0.0.1:18081 CT_AGENT_ORIGIN_PROTO=tcp \
+CT_AGENT_STATE_DIR=~/ct-agent-state CT_AGENT_CAPABILITY_OUT=~/ct-agent-state/capability.bin \
+./ct-agent onboard
+```
+
+Confirm it's live independently of the portal UI — a real external request:
+
+```
+$ curl -s https://<your tunnel id>.bunsenbrenner.org/
+Sort Participant 1 — online
+```
+
+![New tunnel, connected]({{ '/assets/06-new-tunnel-connected.png' | relative_url }})
+
 ## Step 1 — Write a handler that honors the move contract
 
-Your handler is a program that reads one round-input JSON object on **stdin** and writes exactly
-one move JSON object on **stdout**. One invocation per round; it holds no state between rounds.
+The fastest and recommended path: run the **`sort-arena-harness`** skill from this repo with your
+coding CLI, and describe your strategy in plain language. It writes the spec, generates real code
+from it, and verifies that code before you touch anything else — see the
+[first-participant tutorial]({{ '/tutorials/first-participant/' | relative_url }}) for what that
+loop looks like and why it's built this way.
+
+If you'd rather write the handler yourself: your handler is a program that reads one round-input
+JSON object on **stdin** and writes exactly one move JSON object on **stdout**. One invocation per
+round; it holds no state between rounds.
 
 Read [The move protocol]({{ '/reference/move-protocol/' | relative_url }}) in full — it is short
 and it is the authority. The shape:
@@ -134,7 +189,7 @@ Three things that bite first-time participants:
   spent. Your handler should read `correction` when present. Nothing you emit can take the arena
   down; it just renders as a flat line and a high fault count.
 
-Fastest start: copy a directory out of
+Manual fastest start (skipping the skill): copy a directory out of
 [`templates/`](https://github.com/scimbe/CADS-DEMO-sort/tree/main/templates) and edit its system
 prompt. Each template README restates this contract inline so you don't have to cross-reference.
 
@@ -233,6 +288,15 @@ python dryrun.py ./handler.sh
 You are ready to go live when `faults=0` and `sorted=True`. Beating the reference sorter's
 `rounds` is the actual game — the baseline is deliberately simple and explainable, not fast.
 
+**If your handler is generated code** (the recommended path, via the `sort-arena-harness` skill):
+run `dryrun.py` **twice** against the exact same array (its third argument fixes the seed instead
+of drawing a fresh random one). Identical output both times is what proves it's real, reliable,
+deterministic code rather than a live guess that happened to land once — see the
+[first-participant tutorial]({{ '/tutorials/first-participant/' | relative_url }}) for why that
+distinction is the actual point of this exercise. A live-decision handler will *not* generally
+reproduce byte-identical runs — that's expected for that style of handler, and exactly the
+difference generated code is meant to remove.
+
 ## Step 3 — Confirm you're visible in the arena
 
 Once your handler is added (today: by the operator, to `SORT_PARTICIPANTS_FILE` — see the honest
@@ -248,12 +312,15 @@ gap noted above):
 
 ## Where to look next
 
+- [Bring your own participant online]({{ '/tutorials/first-participant/' | relative_url }}) — the
+  `sort-arena-harness` skill loop: describe a strategy, get real generated code, learn what a
+  failure tells you about the spec.
+- [Why generate code, not live decisions]({{ '/explanation/why-generate-not-decide/' | relative_url }})
+  — the full evidence behind this harness's design.
 - [The move protocol]({{ '/reference/move-protocol/' | relative_url }}) — the authoritative
   contract, including relay mode, bounds, and the full scoring table.
 - [`templates/`](https://github.com/scimbe/CADS-DEMO-sort/tree/main/templates) — copy-and-go
-  starter kits per CLI tool.
+  starter kits per CLI tool, for the manual (non-skill) path.
 - [`participants/`](https://github.com/scimbe/CADS-DEMO-sort/tree/main/participants) — worked
   example harnesses, each deliberately different, with their own READMEs explaining what was
   changed and what it did to the numbers.
-- [Bring your own participant online]({{ '/tutorials/first-participant/' | relative_url }}) — the
-  full walkthrough, start to finish, with real screenshots.
