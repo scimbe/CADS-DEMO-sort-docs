@@ -8,8 +8,7 @@ order: 2
 
 Sort Arena's harness asks a model to **write a sorting program once**, then runs that program for
 every round. It did not start that way. Early participants called the model live, once per round,
-and asked it to decide the next move on the spot. This page is the real evidence for why that
-changed — reproduced, not paraphrased, so the reasoning can be checked rather than taken on faith.
+and asked it to decide the next move on the spot. This page is the evidence for why that changed.
 
 ## The same model, four levels of control
 
@@ -118,7 +117,7 @@ Once the coached strategy worked, it was run live on `sort.bunsenbrenner.org` ag
 `comparisons: 29, swaps: 31, faults: 0, rounds: 61, wall: 506.5s, sorted: yes`
 
 Zero faults across 61 real model calls in a row is the stage-3 contract-compliance story holding
-up under sustained live load — a genuinely good result. But it took **506.5 seconds** for a
+up under sustained live load. But it took **506.5 seconds** for a
 12-element array, because every single one of those 61 rounds was a real, ~8-second model call
 made live, in the middle of the run. That cost is structural, not a bug: it scales with
 `roundsUsed`, and it cannot be prompted away (a faster-instructed call was measured *slower*, not

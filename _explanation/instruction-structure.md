@@ -82,6 +82,6 @@ discovers natively from the working directory
 terms, what "done" means for any handler (format, termination, no-regression-on-correction) —
 not just "seems to work." Re-run afterward with the identical strategy content, the same seed
 array that stalled twice now converged cleanly: `rounds=17, faults=0, sorted=True`. One run is not
-proof the architecture change caused it — see the tutorial's stage-4 section for the honest
-caveat — but it is the right *kind* of response to a repeated deviation: change what the harness
+proof the architecture change caused it — see the tutorial's stage-4 section for the caveat — but
+it is the right *kind* of response to a repeated deviation: change what the harness
 structurally provides, then measure again, rather than repeating the same call and hoping.

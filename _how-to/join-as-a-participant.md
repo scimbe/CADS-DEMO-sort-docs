@@ -1,6 +1,6 @@
 ---
 title: Join as a participant
-description: Mint an identity, write a handler, verify it, go live -- and the one honest gap in today's deployment.
+description: Mint an identity, write a handler, verify it, go live -- and the current deployment gap.
 order: 1
 ---
 
@@ -32,7 +32,7 @@ honors the move contract, verify it before you go live, and confirm you're visib
   [the releases page](https://github.com/scimbe/ct-agent/releases/latest) — no build step
   required. Confirmed working on Windows as of `v0.4.1`.
 
-## Honest status: self-service needs no bridge changes; one real transport hurdle remains
+## Status: self-service needs no bridge changes; one real transport hurdle remains
 
 CADS-Tunnel does have a genuine, documented, self-service path for exactly this: mint an OIDC
 identity, provision a pairwise Agent-Fabric channel yourself, serve a role over it via
@@ -181,7 +181,7 @@ subsystems are involved here, not one:
   are what `CT_AGENT_SERVICE_HANDLER_CMD` belongs to: point it at your `handler.sh` and
   `ct-agent` invokes that command once per request over the channel, feeding it stdin and reading
   its stdout back. *That's* the actual stdin/stdout-shaped bridge the move protocol expects — it's
-  what the "Honest status" section above is describing, and it's what a real self-service join
+  what the "Status" section above is describing, and it's what a real self-service join
   will eventually route through.
 
 As of today, **neither path is what actually gets your handler running live** on
