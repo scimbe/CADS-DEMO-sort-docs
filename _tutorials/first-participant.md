@@ -239,9 +239,30 @@ That is the right *shape* of response to a repeated harness failure — change w
 structurally provides, then measure again — whether or not this specific instance turns out to
 generalize.
 
-Live arena run against `bridge/server.js`, screenshots from `sort.bunsenbrenner.org`:
+Live arena run against `bridge/server.js`, on the real `sort.bunsenbrenner.org` page, with
+`bubble-sort-claude` selected as the only solo-run participant:
 
-<!-- filled in after the live run -->
+![Sort Arena, bubble-sort-claude selected](../assets/sort-arena-live-01-loaded.png)
+
+A real 12-element array, run to completion — every `compare`/`swap` in the round timeline below
+is a real `claude` CLI call:
+
+![Sort Arena, bubble-sort-claude finished correctly](../assets/sort-arena-live-04-bubble-sort-complete.png)
+
+`comparisons: 29, swaps: 31, faults: 0, rounds: 61, wall: 506.5s, sorted: yes`. 61 rounds for a
+12-element array is real bubble-sort cost, not a harness problem — see "why this costs more
+rounds than a direct-placement strategy" in `AGENTS.md`. Zero faults across 61 real LLM calls in
+a row is the contract-compliance story from stage 3 holding up under sustained live load, not
+just a short dry run.
+
+**An honest wart, found live, not hidden:** the bridge's solo-run endpoint buffers the *entire*
+run server-side and only streams round events to the browser once the whole thing finishes —
+confirmed by a direct `curl -X POST .../run/bubble-sort-claude`, which returned nothing but a
+`start` event for the first several tens of seconds. For a real LLM participant this means the
+page can sit looking frozen (0 comparisons, 0 swaps, "running") for the full multi-minute
+duration of a run before dumping the complete trace at once — the opposite of the page's own
+"watch the path" premise. Filed as
+[CADS-DEMO-sort#12](https://github.com/scimbe/CADS-DEMO-sort/issues/12), not fixed here.
 
 ### What the four stages actually show, side by side
 
