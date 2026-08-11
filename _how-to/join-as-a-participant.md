@@ -32,7 +32,7 @@ honors the move contract, verify it before you go live, and confirm you're visib
   [the releases page](https://github.com/scimbe/ct-agent/releases/latest) — no build step
   required. Confirmed working on Windows as of `v0.4.1`.
 
-## Honest status: self-service exists and is real, but not smoothly end-to-end today
+## Honest status: self-service needs no bridge changes; one real transport hurdle remains
 
 CADS-Tunnel does have a genuine, documented, self-service path for exactly this: mint an OIDC
 identity, provision a pairwise Agent-Fabric channel yourself, serve a role over it via
@@ -69,15 +69,36 @@ this tutorial:
   `verify_invitation`, and confirmed domain separation (an invitation's signature does not
   verify as a grant's) — see the commit linked from the issue for the exact repro.
 
-**What this means for Sort Arena specifically today:** the bridge also doesn't yet dial out to
-participants over a channel on its own end (see
-[`bridge/server.js`](https://github.com/scimbe/CADS-DEMO-sort/blob/main/bridge/server.js)'s own
-header comment) — it only runs handler commands the operator has listed in
-`SORT_PARTICIPANTS_FILE`. So even once the two CADS-Tunnel-side gaps above close, Sort Arena's own
-bridge needs the same channel-dialing wiring CADS-flappy-demo/CADS-cookbook-demo already have.
-Tracked as [CADS-DEMO-sort#9](https://github.com/scimbe/CADS-DEMO-sort/issues/9). Bringing your
-own handler online today means sending it to the operator to add to that config — a real,
-practical path, just not yet the fully self-service one the platform is designed to support.
+**Corrected, 2026-08-11 — the bridge itself needs no changes at all.** An earlier version of this
+section claimed Sort Arena's bridge needed "the same channel-dialing wiring CADS-flappy-demo
+already has." That was wrong, found by actually reading CADS-flappy-demo's bridge source rather
+than assuming: it has no channel-dialing code either. `CREW_PHYSICS_CMD` and friends are *plain
+operator-configured shell commands*, exactly like `SORT_PARTICIPANTS_FILE`'s `cmd` field — they
+just happen, in production, to be a `ct-agent channel` invocation (`CT_CHANNEL_ROLE=initiate
+CT_CHANNEL_CALL_SERVICE=text_generation CT_CHANNEL_GRANT=... CT_CHANNEL_HOLDER_KEY=...
+CT_CHANNEL_NOISE_KEY=... ct-agent channel`, confirmed from the real
+[`compose.flappy-demo.yml`](https://github.com/scimbe/CADS-flappy-demo/blob/main/compose.flappy-demo.yml)).
+`callHandlerProcess` in `bridge/server.js` was already confirmed command-agnostic earlier in this
+same redesign — it spawns whatever `cmd` string it's given and doesn't care whether that's a
+local script or a `ct-agent channel` dial. So "self-service" for Sort Arena was never a bridge
+architecture gap — it's purely: provision a real channel (below), then the operator points a
+`SORT_PARTICIPANTS_FILE` entry's `cmd` at the `ct-agent channel` invocation for it.
+
+**Verified as far as the control-plane layer, live, today:** provisioned a real link channel
+end-to-end against `bunsenbrenner.org` — `ct-agent channel operator-init`, `channel init` (both
+sides), `POST /me/channels`, both members added, both grants signed — all succeeded on the first
+real attempt. Bringing up the accept-side serve process (`ct-agent channel`, `CT_CHANNEL_ROLE=accept`)
+also started cleanly. The one step that did **not** complete live: dialing from the initiate side
+timed out at the QUIC broker/relay transport layer, from this specific session's sandboxed
+network — the same environment that needed a TLS-TCP browser-mode fallback for the unrelated
+mesh-plane tunnel earlier, so likely the identical UDP-egress restriction, not a channel-protocol
+or Sort Arena defect. Retesting from inside the real bridge container hit a second, separate
+blocker (a `ct-agent` build linked against a newer glibc than the container's Debian bookworm
+base). Both are real, open, environment-specific hurdles to *finishing* this specific live proof —
+neither is evidence against the design, which is the same one CADS-flappy-demo already runs in
+production. See [CADS-DEMO-sort#9](https://github.com/scimbe/CADS-DEMO-sort/issues/9) for the full
+writeup and the exact commands to pick this up from a host that can actually reach the broker/relay
+ports.
 
 Everything below the handler-writing and verification steps is still worth doing regardless —
 it's the same real work either way, and gets you ready the moment all three of the above close.
@@ -291,6 +312,33 @@ else:
     print(f"budget exhausted, still {array}")
 
 print(f"rounds={len(history)} faults={faults} errors={errors} sorted={array == sorted(array)}")
+
+# CADS-DEMO-sort#15: a handler can pass every check above and still silently ignore `correction`
+# entirely if its code never actually branches on it -- generated code has been found doing
+# exactly this (expecting `correction` to be a structured object, when the real contract always
+# sends a plain string). None of the checks above would catch it: a well-formed handler never
+# triggers a real correction, so this needs its own direct probe -- same round, sent twice, once
+# plain and once with `correction` attached, and the reply must differ.
+probe = {"round": 1, "array": [3, 1, 2], "history": [], "budgetRemaining": 20,
+         "mode": "solo", "you": "dryrun"}
+corrected = dict(probe, correction="i and j must differ; you sent i=0 j=0")
+try:
+    base = subprocess.run(["bash", HANDLER], input=json.dumps(probe), capture_output=True,
+                          text=True, timeout=30).stdout.strip()
+    fixed = subprocess.run(["bash", HANDLER], input=json.dumps(corrected), capture_output=True,
+                           text=True, timeout=30).stdout.strip()
+    if base and base == fixed:
+        print("correction check: NOTE -- move is byte-identical with and without `correction` "
+              "present. Expected if your handler is deterministic and never emits an invalid "
+              "move in the first place (like the reference baseline) -- it will never actually "
+              "receive a real correction to react to. But if your handler IS meant to react to "
+              "`correction` (most generated handlers are, per their own AGENTS.md) and picked "
+              "the same move anyway, it may be silently ignoring the field -- check that it "
+              "treats `correction` as a plain string, not an object (CADS-DEMO-sort#15).")
+    else:
+        print("correction check: OK (move changed when `correction` was present)")
+except subprocess.TimeoutExpired:
+    print("correction check: SKIPPED (handler timed out)")
 ```
 
 Run it against the non-LLM baseline first, so you know the harness around *you* is what's being
@@ -311,7 +359,10 @@ python dryrun.py ./handler.sh
 You are ready to go live when `faults=0` and `sorted=True`. Beating the reference sorter's
 `rounds` is the actual game — the baseline is deliberately simple and explainable, not fast. A
 nonzero `errors` count on an otherwise-good run isn't a verdict on your handler at all — re-run to
-confirm before you read anything into it.
+confirm before you read anything into it. The `correction check` line is a second, narrower
+signal: `OK` proves your handler genuinely reacts to `correction`; a `NOTE` isn't automatically a
+problem (see the check's own message for when it's expected), but if your `AGENTS.md` describes
+reacting to `correction` and this still says `NOTE`, that mismatch is worth chasing down.
 
 **If your handler is generated code** (the recommended path, via the `sort-arena-harness` skill):
 run `dryrun.py` **twice** against the exact same array (its third argument fixes the seed instead
@@ -324,8 +375,9 @@ difference generated code is meant to remove.
 
 ## Step 3 — Send it to the operator, then confirm you're visible
 
-There's no self-service dispatch yet (the honest gap above), so a verified handler needs an actual
-human step to reach `SORT_PARTICIPANTS_FILE`. Concretely, do ONE of these:
+Self-service channel dialing is architecturally ready (see above) but not yet a working live path
+end to end, so a verified handler still needs a human step to reach `SORT_PARTICIPANTS_FILE`.
+Concretely, do ONE of these:
 
 - **Open an issue** on [scimbe/CADS-DEMO-sort](https://github.com/scimbe/CADS-DEMO-sort/issues/new)
   with your participant directory (or a link to it), your `dryrun.py` output (both a normal run
