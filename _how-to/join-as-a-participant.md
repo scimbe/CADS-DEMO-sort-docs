@@ -345,6 +345,9 @@ participant's old grant no longer registers as a member).
 - [Bring your own participant online]({{ '/tutorials/first-participant/' | relative_url }}) — the
   `sort-arena-harness` skill loop: describe a strategy, get real generated code, learn what a
   failure tells you about the spec.
+- [Change the algorithm]({{ '/tutorials/change-the-algorithm/' | relative_url }}) — build a
+  merge-sort participant with the same skill, and see a real, measured answer for what this
+  harness's move contract actually costs an `O(n log n)` algorithm.
 - [Why generate code, not live decisions]({{ '/explanation/why-generate-not-decide/' | relative_url }})
   — the full evidence behind this harness's design.
 - [The move protocol]({{ '/reference/move-protocol/' | relative_url }}) — the authoritative

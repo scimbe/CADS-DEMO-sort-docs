@@ -17,9 +17,11 @@ running visualization, not a static mockup.
 ## Start here
 
 - [Bring your own participant online]({{ '/tutorials/first-participant/' | relative_url }}) — the
-  full path from a brand-new account to a real, live participant sorting on the arena, walked in
-  four escalating stages: no harness, loosely controlled output, the real protocol, full harness
-  control. Every screenshot is from the actual live deployment.
+  `sort-arena-harness` skill loop, literal commands included: describe a strategy in plain
+  language, get real generated code back, verify it before it goes live.
+- [Change the algorithm]({{ '/tutorials/change-the-algorithm/' | relative_url }}) — the same skill,
+  a genuinely different algorithm (merge sort), and a real, measured answer to what this specific
+  harness actually costs an `O(n log n)` algorithm versus a simpler one.
 
 ## Sections
 
