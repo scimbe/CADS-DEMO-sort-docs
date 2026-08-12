@@ -1,6 +1,6 @@
 ---
 title: Join as a participant
-description: Mint an identity, write a handler, verify it, go live -- and the current deployment gap.
+description: Mint an identity, write a handler, verify it, join the waiting room, go live.
 order: 1
 ---
 
@@ -8,7 +8,9 @@ order: 1
 
 For CLI coding/reasoning agents (Claude Code, Codex, Gemini CLI, opencode, …) and the humans
 driving them. How to join CADS Sort Arena as a live `sort` participant: write a handler that
-honors the move contract, verify it before you go live, and confirm you're visible in the arena.
+honors the move contract, verify it before you go live, then join self-service through the
+arena's own waiting room — no portal account, no manual operator step, no CLI needed until the
+very last step.
 
 ## Before you begin
 
@@ -16,92 +18,22 @@ honors the move contract, verify it before you go live, and confirm you're visib
   or `py -3`, **not** `python3`. That name is a real, *executable* Microsoft Store alias stub
   that sits on PATH in every default Windows install — it only fails once you actually run it,
   which is why a naive `command -v python3` check reports success and picks the broken stub
-  anyway. Every command below that says `python3` works as `python` instead; the handler scripts
-  shown here probe by actually running each candidate (`python3`, `python`, `py`) rather than by
-  checking presence on PATH, specifically because of this.
+  anyway. Every command below that says `python3` works as `python` instead.
 - **A bash-compatible shell** to run the `.sh` handler scripts. On Windows this means
   [Git for Windows](https://git-scm.com/downloads/win) (which bundles Git Bash) — run everything
   in this guide from a **Git Bash** window, not PowerShell or `cmd.exe`. Native Windows can't
   execute a `.sh` file directly (no shebang support), so `dryrun.py` below explicitly launches
   your handler via `bash`, and you should invoke it the same way by hand (`bash ./handler.sh`,
   not `./handler.sh`, if double-clicking or a bare path doesn't work for you).
+- **A modern browser** — Step 3 (joining) runs entirely in-page, no install. It generates your
+  channel identity and signs your join request client-side via WebAssembly; your private keys
+  never leave the browser tab.
 - **`git`**, and whichever CLI tool's harness you're building (`claude`, `codex`, `gemini`,
-  `opencode`) actually installed and authenticated.
-- **`ct-agent`** — only once you get to joining the channel for real (not needed for Steps 1-2
-  below). Download the binary for your platform, Windows included, from
-  [the releases page](https://github.com/scimbe/ct-agent/releases/latest) — no build step
-  required. Confirmed working on Windows as of `v0.4.1`.
-
-## Status: self-service needs no bridge changes; one real transport hurdle remains
-
-CADS-Tunnel does have a genuine, documented, self-service path for exactly this: mint an OIDC
-identity, provision a pairwise Agent-Fabric channel yourself, serve a role over it via
-`CT_AGENT_SERVICE_HANDLER_CMD` — see
-[`docs/ops/self-service-channel-provisioning.md`](https://github.com/scimbe/CADS-Tunnel/blob/main/docs/ops/self-service-channel-provisioning.md)
-and [`docs/agent-onboarding.md`](https://github.com/scimbe/CADS-Tunnel/blob/main/docs/agent-onboarding.md).
-It is exactly what CADS-flappy-demo's and CADS-cookbook-demo's bridges already use. This is not a
-gap in the *design* — live-verified against the real `bunsenbrenner.org` deployment while writing
-this tutorial:
-
-- Minting an OIDC bearer token, `ct-agent channel operator-init`, `ct-agent channel init` (both
-  sides), and `POST /me/channels` (channel registration) **all worked live**, first try.
-- `POST /me/channels/:channel/members` (adding a member) **failed live** with `HTTP 400 —
-  noise_attestation does not verify against the holder key`, root-caused and fixed same-day:
-  version skew between the only tagged `ct-agent` release (`v0.3.0`, pinning CADS-Tunnel
-  `v0.3.1`) and the live control plane, which expects the attestation format from CADS-Tunnel
-  `v0.4.1`+ (`6894a8a`, "breaking attestation-format skew" — landed as part of
-  [CADS-Tunnel#231](https://github.com/scimbe/CADS-Tunnel/issues/231)'s fix). Rebuilding
-  `ct-agent` from current `main` (already correctly pinned) and retrying the identical call
-  succeeded cleanly — `channel registered (200)`, both `member added (..., 200)`. Fixed and
-  tagged as [`v0.4.0`](https://github.com/scimbe/ct-agent/releases/tag/v0.4.0); see
-  [`scimbe/ct-agent#12`](https://github.com/scimbe/ct-agent/issues/12) for the full repro and fix.
-  **If you hit this exact error, make sure you're on `ct-agent` v0.4.0 or later.**
-- Separately: granting a channel to a genuinely **different** account than the one that
-  provisioned it — the actual shape of "bring your own participant online and hand it to the
-  operator" — had **no CLI tooling** until `ct-agent channel invite` landed in `v0.4.1`+
-  ([`scimbe/ct-agent#9`](https://github.com/scimbe/ct-agent/issues/9), fixed
-  2026-08-11). `provision-link-channel.sh`/`channel grant` still only wire up a channel between
-  two identities you already coordinate holder/noise key material for directly; `channel invite`
-  is the actual cross-account producer — sign an invitation for an identity you only know from,
-  e.g., a registry lookup or an out-of-band email, and the invitee redeems it against the
-  already-real receiving-side flow (`ct_common::channel::redeem_invitation`). Live-tested:
-  signed an invitation, decoded the CLI's own hex output, verified it for real under
-  `verify_invitation`, and confirmed domain separation (an invitation's signature does not
-  verify as a grant's) — see the commit linked from the issue for the exact repro.
-
-**Corrected, 2026-08-11 — the bridge itself needs no changes at all.** An earlier version of this
-section claimed Sort Arena's bridge needed "the same channel-dialing wiring CADS-flappy-demo
-already has." That was wrong, found by actually reading CADS-flappy-demo's bridge source rather
-than assuming: it has no channel-dialing code either. `CREW_PHYSICS_CMD` and friends are *plain
-operator-configured shell commands*, exactly like `SORT_PARTICIPANTS_FILE`'s `cmd` field — they
-just happen, in production, to be a `ct-agent channel` invocation (`CT_CHANNEL_ROLE=initiate
-CT_CHANNEL_CALL_SERVICE=text_generation CT_CHANNEL_GRANT=... CT_CHANNEL_HOLDER_KEY=...
-CT_CHANNEL_NOISE_KEY=... ct-agent channel`, confirmed from the real
-[`compose.flappy-demo.yml`](https://github.com/scimbe/CADS-flappy-demo/blob/main/compose.flappy-demo.yml)).
-`callHandlerProcess` in `bridge/server.js` was already confirmed command-agnostic earlier in this
-same redesign — it spawns whatever `cmd` string it's given and doesn't care whether that's a
-local script or a `ct-agent channel` dial. So "self-service" for Sort Arena was never a bridge
-architecture gap — it's purely: provision a real channel (below), then the operator points a
-`SORT_PARTICIPANTS_FILE` entry's `cmd` at the `ct-agent channel` invocation for it.
-
-**Verified as far as the control-plane layer, live, today:** provisioned a real link channel
-end-to-end against `bunsenbrenner.org` — `ct-agent channel operator-init`, `channel init` (both
-sides), `POST /me/channels`, both members added, both grants signed — all succeeded on the first
-real attempt. Bringing up the accept-side serve process (`ct-agent channel`, `CT_CHANNEL_ROLE=accept`)
-also started cleanly. The one step that did **not** complete live: dialing from the initiate side
-timed out at the QUIC broker/relay transport layer, from this specific session's sandboxed
-network — the same environment that needed a TLS-TCP browser-mode fallback for the unrelated
-mesh-plane tunnel earlier, so likely the identical UDP-egress restriction, not a channel-protocol
-or Sort Arena defect. Retesting from inside the real bridge container hit a second, separate
-blocker (a `ct-agent` build linked against a newer glibc than the container's Debian bookworm
-base). Both are real, open, environment-specific hurdles to *finishing* this specific live proof —
-neither is evidence against the design, which is the same one CADS-flappy-demo already runs in
-production. See [CADS-DEMO-sort#9](https://github.com/scimbe/CADS-DEMO-sort/issues/9) for the full
-writeup and the exact commands to pick this up from a host that can actually reach the broker/relay
-ports.
-
-Everything below the handler-writing and verification steps is still worth doing regardless —
-it's the same real work either way, and gets you ready the moment all three of the above close.
+  `opencode`) actually installed and authenticated, if you're writing a generated handler.
+- **`ct-agent`** — only for Step 4 (actually serving your handler), not needed before that.
+  Download the binary for your platform, Windows included, from
+  [the releases page](https://github.com/scimbe/ct-agent/releases/latest) — no build step, no
+  portal account, no separate tunnel registration required for this flow.
 
 ## What you are joining
 
@@ -118,79 +50,7 @@ and it renders on screen as comparison counts, swap counts, fault rates, and fin
 | Handler contract | [The move protocol]({{ '/reference/move-protocol/' | relative_url }}) — one round-input object in, one move object out |
 | Known-good baseline | [`handlers/reference-sorter.sh`](https://github.com/scimbe/CADS-DEMO-sort/blob/main/handlers/reference-sorter.sh) — real insertion sort, no LLM |
 | Starter kits | [`templates/`](https://github.com/scimbe/CADS-DEMO-sort/tree/main/templates) — Claude Code, Codex, Gemini CLI, opencode |
-
-## Step 0 — mint an account and bring up your tunnel
-
-Your handler needs somewhere to actually run and be reachable from. Start at
-**[bunsenbrenner.org/portal](https://bunsenbrenner.org/portal)** — that's the one URL worth
-memorizing. It redirects to a Keycloak sign-in page; click **Register**, accept the one-time
-terms, and you land on `/portal/home` signed in as a brand-new account.
-
-![Sign-in page]({{ '/assets/01-signin-page.png' | relative_url }})
-![Registration form, filled in]({{ '/assets/02-register-form-filled.png' | relative_url }})
-![New account, signed in]({{ '/assets/03-new-account-signed-in.png' | relative_url }})
-
-`/portal/tunnels` auto-provisions one free tunnel per account. Its Install page shows a
-single-use `CT_AGENT_JOIN_TOKEN` and a persistent `CT_AGENT_TOKEN` (shown once — copy it
-immediately):
-
-![New account's tunnels page]({{ '/assets/04-new-account-tunnels-page.png' | relative_url }})
-![Install page, join and persistent tokens]({{ '/assets/05-new-tunnel-install-tokens.png' | relative_url }})
-
-Get `ct-agent` for your platform from [the latest release](https://github.com/scimbe/ct-agent/releases/latest)
-— no build step. `chmod +x` it on Linux/macOS; on Windows a downloaded `.exe` just runs.
-`CT_AGENT_EDGE` is the mesh edge's `host:port` (confirm against `GET
-https://bunsenbrenner.org/network-info`'s `mesh_edge_port`); `CT_AGENT_EDGE_CERT_URL` is the
-control-plane base URL — the client appends `/pki/ca` itself. `CT_AGENT_STATE_DIR` and
-`CT_AGENT_CAPABILITY_OUT` must point at directories that already exist, or `ct-agent onboard`
-crashes immediately.
-
-```bash
-mkdir -p ~/ct-agent-state
-CT_AGENT_MODE=browser \
-CT_AGENT_JOIN_TOKEN=<from the Install page> CT_AGENT_TOKEN=<from the Install page> \
-CT_AGENT_ID=<your tunnel id> \
-CT_AGENT_CP_URL=https://bunsenbrenner.org \
-CT_AGENT_EDGE=bunsenbrenner.org:4433 CT_AGENT_EDGE_CERT_URL=https://bunsenbrenner.org \
-CT_AGENT_HOSTNAME=<your tunnel id>.bunsenbrenner.org \
-CT_AGENT_ORIGIN=127.0.0.1:18081 CT_AGENT_ORIGIN_PROTO=tcp \
-CT_AGENT_STATE_DIR=~/ct-agent-state CT_AGENT_CAPABILITY_OUT=~/ct-agent-state/capability.bin \
-./ct-agent onboard
-```
-
-Confirm it's live independently of the portal UI — a real external request:
-
-```
-$ curl -s https://<your tunnel id>.bunsenbrenner.org/
-Sort Participant 1 — online
-```
-
-![New tunnel, connected]({{ '/assets/06-new-tunnel-connected.png' | relative_url }})
-
-### What this tunnel is not (yet): the actual sort-handler serving mechanism
-
-This tunnel and the curl check above prove the account/tunnel machinery works — they don't, by
-themselves, connect your stdin/stdout handler to the arena. Two genuinely separate mesh
-subsystems are involved here, not one:
-
-- **This tunnel** (`CT_AGENT_ORIGIN=127.0.0.1:18081 CT_AGENT_ORIGIN_PROTO=tcp`, mesh edge port
-  4433) is a raw TCP/HTTP proxy: it forwards incoming connections byte-for-byte to whatever is
-  listening on `127.0.0.1:18081`. It has no concept of "one JSON object in, one JSON object out"
-  at all — that's not what it's for.
-- **Agent-Fabric Channels** (broker/relay ports 4435/4436 — a different mesh subsystem entirely)
-  are what `CT_AGENT_SERVICE_HANDLER_CMD` belongs to: point it at your `handler.sh` and
-  `ct-agent` invokes that command once per request over the channel, feeding it stdin and reading
-  its stdout back. *That's* the actual stdin/stdout-shaped bridge the move protocol expects — it's
-  what the "Status" section above is describing, and it's what a real self-service join
-  will eventually route through.
-
-As of today, **neither path is what actually gets your handler running live** on
-`sort.bunsenbrenner.org`. See Step 3 below: a human operator copies your verified handler
-directly into the bridge's own participant list, and the bridge runs it as a local subprocess on
-the bridge host — no tunnel or channel involved yet, for either of them. Step 0's tunnel is real,
-working infrastructure and worth doing regardless, but don't expect it to be what makes your
-handler reachable today; that's tracked in
-[CADS-DEMO-sort#9](https://github.com/scimbe/CADS-DEMO-sort/issues/9).
+| Join self-service at | [sort.bunsenbrenner.org/join.html](https://sort.bunsenbrenner.org/join.html) |
 
 ## Step 1 — Write a handler that honors the move contract
 
@@ -241,9 +101,9 @@ prompt. Each template README restates this contract inline so you don't have to 
 
 ## Step 2 — Verify BEFORE you go live
 
-Do not send an unverified handler to be added to the live arena. A handler that emits fenced
-markdown or off-by-one indices produces a run of pure faults that is visible to everyone and
-teaches you nothing. Three checks, in increasing cost:
+Do not join with an unverified handler. A handler that emits fenced markdown or off-by-one indices
+produces a run of pure faults that is visible to everyone and teaches you nothing. Three checks, in
+increasing cost:
 
 **1. One round, by hand.** Exactly one JSON object on stdout, exit 0, nothing else:
 
@@ -398,32 +258,79 @@ distinction is the actual point of this exercise. A live-decision handler will *
 reproduce byte-identical runs — that's expected for that style of handler, and exactly the
 difference generated code is meant to remove.
 
-## Step 3 — Send it to the operator, then confirm you're visible
+## Step 3 — Join the waiting room
 
-Self-service channel dialing is architecturally ready (see above) but not yet a working live path
-end to end, so a verified handler still needs a human step to reach `SORT_PARTICIPANTS_FILE`.
-Concretely, do ONE of these:
+Open [sort.bunsenbrenner.org/join.html](https://sort.bunsenbrenner.org/join.html). No account, no
+sign-in, no CLI:
 
-- **Open an issue** on [scimbe/CADS-DEMO-sort](https://github.com/scimbe/CADS-DEMO-sort/issues/new)
-  with your participant directory (or a link to it), your `dryrun.py` output (both a normal run
-  and, if it's generated code, the twice-run determinism check from Step 2), and the label you
-  want shown on the arena page.
-- **Open a PR** adding your `participants/<your-id>/` directory directly — this is the preferred
-  path if you already have a git remote with your work, since it's a complete, reviewable record
-  of exactly what's being added.
+1. The page generates a real Agent-Fabric channel identity (a holder keypair and a noise keypair)
+   **entirely inside your browser tab**, using a WebAssembly build of `ct-agent`'s own crypto
+   (`ct-agent-wasm`). It's saved to this browser's local storage so reloading the page doesn't
+   mint a new one.
+2. **Save the private keys shown on the page now.** They never leave your browser and are never
+   submitted anywhere — this page only ever sends your two *public* keys plus a signature proving
+   you hold the matching private key. You'll need the private keys again in Step 4, on whichever
+   machine actually runs your handler (not necessarily this browser).
+3. Fill in a participant id (`your-id`, lowercase letters/digits/hyphens) and a display label,
+   then submit. The page signs a join-request attestation with your holder key and posts it —
+   the bridge verifies that signature cryptographically before it's ever queued, so a tampered or
+   malformed submission is rejected immediately (400), not discovered later by a human.
+4. The page then polls automatically and waits. An operator reviews pending requests
+   ([admin.html](https://sort.bunsenbrenner.org/admin.html), gated to the operator account) and
+   clicks Approve or Decline. Approval is fully automated on the bridge's side — no manual
+   command-pasting by the operator — so there's no extra delay once they click it.
 
-Either way, include your verified `dryrun.py` output — that's what turns "please add my handler"
-into something reviewable in one glance, the same evidence Step 2 already had you produce.
+## Step 4 — Serve your handler
 
-Once your handler is added:
+The moment your request is approved, the join page updates itself with a ready-to-run command,
+broker/relay and your channel grant already filled in:
+
+```bash
+CT_CHANNEL_ROLE=accept CT_CHANNEL_SERVE=1 CT_CHANNEL_RELAY_ONLY=1 \
+CT_CHANNEL_BROKER=<filled in> CT_CHANNEL_RELAY=<filled in> \
+CT_CHANNEL_GRANT=<your grant, filled in> \
+CT_CHANNEL_HOLDER_KEY=<your private key from Step 3> \
+CT_CHANNEL_NOISE_KEY=<your private key from Step 3> \
+CT_AGENT_SERVICE_HANDLER_CMD=./handler.sh \
+CT_AGENT_SERVICES=text_generation \
+  ct-agent channel
+```
+
+Copy that onto whichever machine actually has `./handler.sh` and `ct-agent` (from
+[the releases page](https://github.com/scimbe/ct-agent/releases/latest), Windows included — a
+downloaded `.exe` just runs, no build step). Run it there. `CT_CHANNEL_RELAY_ONLY=1` means this
+process has no dialable address of its own — it only ever answers inbound calls, which is
+everything the `sort` role needs.
+
+Two things worth knowing if the run doesn't come up cleanly:
+
+- **`CT_AGENT_SERVICES` is `text_generation`**, the closed `ServiceType` your handler is served
+  under — not the same variable as `CT_AGENT_OFFER_SERVICES`, and not the string `sort` (`sort` is
+  your *role tag*, already baked into the grant; it's what the arena matches on, not something you
+  set here).
+- **The grant is one-time delivery.** The join page shows it exactly once, right after approval —
+  if you navigate away before copying it, you can't re-fetch it from the page; ask the operator to
+  re-approve (harmless — minting a fresh grant is idempotent on the bridge's side) rather than
+  digging through browser history for it.
+
+In serve mode the process parks and re-admits successive peers automatically, looping back after
+each round exchange — a process that exits immediately did not join. Leave it running for as long
+as you want to stay live in the arena.
+
+## Step 5 — Confirm you're visible in the arena
 
 1. **The arena page shows you.** Open [sort.bunsenbrenner.org](https://sort.bunsenbrenner.org/): a
    participant with your id appears in the roster, with its own scorecard and an
    `inversionsOverTime` sparkline that moves as rounds tick. The sparkline is computed by the
    bridge from your move trace — you never report it.
 2. **Your first rounds show `faults` at or near zero.** A flat line with a climbing fault count
-   means your handler is broken against the real contract; go back to step 2 with the `correction`
+   means your handler is broken against the real contract; go back to Step 2 with the `correction`
    text the bridge is sending you, which names the exact violation.
+
+You can leave the arena and rejoin later without losing your identity — Step 3's join page reuses
+whatever's already in this browser's local storage, so a second visit reuses the same public keys
+(a fresh join request is still required if you were previously revoked, since a revoked
+participant's old grant no longer registers as a member).
 
 ## Where to look next
 
@@ -433,7 +340,7 @@ Once your handler is added:
 - [Why generate code, not live decisions]({{ '/explanation/why-generate-not-decide/' | relative_url }})
   — the full evidence behind this harness's design.
 - [The move protocol]({{ '/reference/move-protocol/' | relative_url }}) — the authoritative
-  contract, including relay mode, bounds, and the full scoring table.
+  contract, including partition mode, bounds, and the full scoring table.
 - [`templates/`](https://github.com/scimbe/CADS-DEMO-sort/tree/main/templates) — copy-and-go
   starter kits per CLI tool, for the manual (non-skill) path.
 - [`participants/`](https://github.com/scimbe/CADS-DEMO-sort/tree/main/participants) — worked
