@@ -267,6 +267,9 @@ sign-in, no CLI:
    **entirely inside your browser tab**, using a WebAssembly build of `ct-agent`'s own crypto
    (`ct-agent-wasm`). It's saved to this browser's local storage so reloading the page doesn't
    mint a new one.
+
+   ![join.html on first load: a fresh channel identity generated client-side, public key shown, private keys displayed for you to save]({{ '/assets/07-join-identity-generated.png' | relative_url }})
+
 2. **Save the private keys shown on the page now.** They never leave your browser and are never
    submitted anywhere — this page only ever sends your two *public* keys plus a signature proving
    you hold the matching private key. You'll need the private keys again in Step 4, on whichever
@@ -275,10 +278,15 @@ sign-in, no CLI:
    then submit. The page signs a join-request attestation with your holder key and posts it —
    the bridge verifies that signature cryptographically before it's ever queued, so a tampered or
    malformed submission is rejected immediately (400), not discovered later by a human.
+
+   ![join.html with participant id and display label filled in, ready to submit]({{ '/assets/08-join-form-filled.png' | relative_url }})
+
 4. The page then polls automatically and waits. An operator reviews pending requests
    ([admin.html](https://sort.bunsenbrenner.org/admin.html), gated to the operator account) and
    clicks Approve or Decline. Approval is fully automated on the bridge's side — no manual
    command-pasting by the operator — so there's no extra delay once they click it.
+
+   ![join.html after submitting: waiting for an operator to review the request, polling automatically]({{ '/assets/09-join-waiting-for-approval.png' | relative_url }})
 
 ## Step 4 — Serve your handler
 
