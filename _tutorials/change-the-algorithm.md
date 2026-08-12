@@ -164,20 +164,18 @@ to, the generated handler correctly drops to a `compare` instead of emitting som
 
 ## What this tutorial found that wasn't the point of it
 
-Two real, verified findings fell out of validating this in a clean container — neither is a merge
-sort problem, both are worth knowing if you're about to write your own participant:
+One real, verified finding fell out of validating this in a clean container — not a merge sort
+problem, and worth knowing if you're about to write your own participant:
 
-- **`dryrun.py` isn't a repo file.** It's referenced by the skill, by `participants/CLAUDE.md`, and
-  by every template README, but a fresh clone doesn't have it — check for yourself with
-  `git log --all -- dryrun.py`. Whichever coding CLI you're using will end up writing a fresh copy
-  of it (or you can write your own from [the move protocol]({{ '/reference/move-protocol/' | relative_url }})
-  — it's a straightforward port of the bridge's own round loop). This surprised the run behind this
-  tutorial too; it isn't something you're missing.
 - **A gitignored `generated/` directory means a fresh clone can't run every shipped participant
   out of the box.** `bubble-sort-claude`'s own generated handler isn't committed (correctly — it's
   build output), so a first-time clone needs `participants/bubble-sort-claude/generate.sh` run once
   before that particular participant works. If a participant faults on every round immediately
   after a fresh clone, this is the first thing to check, not a sign your own setup is broken.
+
+(An earlier run behind this tutorial also hit `dryrun.py` not existing as a repo file, despite
+being referenced by the skill, `participants/CLAUDE.md`, and every template README. That gap is
+closed now — `dryrun.py` is a real, committed file at this repo's root, so a fresh clone has it.)
 
 ## Once it's verified: go live
 

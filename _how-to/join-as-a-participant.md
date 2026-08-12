@@ -119,135 +119,31 @@ printf '%s' '{"round":2,"array":[4,2,7],"history":[],"budgetRemaining":20,"mode"
   | ./handler.sh
 ```
 
-**3. A full local run.** Save this as `dryrun.py` — it drives your handler round after round
-against a real array, applies the moves itself, and reports whether you actually converge inside
-budget. It never touches the network, so it costs you nothing but model calls:
-
-```python
-#!/usr/bin/env python3
-"""Dry-run a Sort Arena handler locally:
-     python3 dryrun.py ./handler.sh [budget] [array]
-   array is optional, comma-separated (e.g. 5,3,8,1,9,2) -- reproduces an exact run instead of a
-   fresh random one each time, e.g. to check this doc's own numbers against your own handler:
-     python3 dryrun.py ./handler.sh 30 5,3,8,1,9,2
-   (Windows: python dryrun.py ./handler.sh [budget] [array], from a Git Bash shell)"""
-import functools, json, random, subprocess, sys
-
-print = functools.partial(print, flush=True)  # a real LLM round takes seconds; unbuffered output
-                                                # is the difference between "running" and "frozen"
-
-HANDLER = sys.argv[1]
-BUDGET = int(sys.argv[2]) if len(sys.argv) > 2 else 60
-array = [int(x) for x in sys.argv[3].split(",")] if len(sys.argv) > 3 \
-    else [random.randint(0, 99) for _ in range(8)]
-print("start:", array)
-
-# Launched via `bash` explicitly, not exec'd directly: Windows has no shebang support and
-# cannot run a .sh file as a subprocess argv[0] at all (CADS-DEMO-sort-docs#1) -- `bash` is
-# assumed on PATH (Git Bash on Windows, native everywhere else), matching every handler's own
-# #!/usr/bin/env bash shebang.
-#
-# `faults` and `errors` are deliberately separate counters (CADS-DEMO-sort-docs#4): a fault is
-# the HANDLER breaking the contract (bad JSON, unknown action, out-of-range indices) -- exactly
-# what docs/protocol.md scores. An error is the ENVIRONMENT failing around it (a timed-out call,
-# an LLM CLI that returned nothing because it hit a rate limit) -- nothing to do with your
-# harness. A long run against a real LLM can hit real rate limits; if you see a wall of `errors`
-# with the array untouched, that's your machine/quota having a bad minute, not your handler being
-# broken -- re-run once things calm down rather than rewriting a harness that was fine.
-history, faults, errors = [], 0, 0
-for rnd in range(1, BUDGET + 1):
-    payload = {"round": rnd, "array": array, "history": history[-20:],
-               "budgetRemaining": BUDGET - rnd, "mode": "solo", "you": "dryrun"}
-    try:
-        proc = subprocess.run(["bash", HANDLER], input=json.dumps(payload), capture_output=True,
-                              text=True, timeout=30)
-    except subprocess.TimeoutExpired:
-        errors += 1
-        print(f"round {rnd}: ERROR (handler timed out)")
-        continue
-
-    if not proc.stdout.strip():
-        errors += 1
-        detail = proc.stderr.strip()
-        print(f"round {rnd}: ERROR (handler produced no output, exit {proc.returncode})" +
-              (f" -- stderr: {detail}" if detail else ""))
-        continue
-
-    try:
-        move = json.loads(proc.stdout)
-        act = move["action"]
-        if act == "done":
-            ok = array == sorted(array)
-            print(f"done at round {rnd}: {'SORTED' if ok else 'NOT SORTED (fault)'} {array}")
-            if ok:
-                break
-            faults += 1
-            continue
-        i, j = move["i"], move["j"]
-        assert act in ("compare", "swap") and i != j and 0 <= i < len(array) and 0 <= j < len(array)
-        if act == "swap":
-            array[i], array[j] = array[j], array[i]
-        history.append({"round": rnd, "action": act, "i": i, "j": j, "resultArray": list(array)})
-    except Exception as e:
-        # The handler DID produce output at this point (checked above), so a parse/shape
-        # failure here really is the handler's own contract violation, not the environment's.
-        faults += 1
-        print(f"round {rnd}: FAULT ({type(e).__name__}: {e})")
-else:
-    print(f"budget exhausted, still {array}")
-
-print(f"rounds={len(history)} faults={faults} errors={errors} sorted={array == sorted(array)}")
-
-# CADS-DEMO-sort#15: a handler can pass every check above and still silently ignore `correction`
-# entirely if its code never actually branches on it -- generated code has been found doing
-# exactly this (expecting `correction` to be a structured object, when the real contract always
-# sends a plain string). None of the checks above would catch it: a well-formed handler never
-# triggers a real correction, so this needs its own direct probe -- same round, sent twice, once
-# plain and once with `correction` attached, and the reply must differ.
-probe = {"round": 1, "array": [3, 1, 2], "history": [], "budgetRemaining": 20,
-         "mode": "solo", "you": "dryrun"}
-corrected = dict(probe, correction="i and j must differ; you sent i=0 j=0")
-try:
-    base = subprocess.run(["bash", HANDLER], input=json.dumps(probe), capture_output=True,
-                          text=True, timeout=30).stdout.strip()
-    fixed = subprocess.run(["bash", HANDLER], input=json.dumps(corrected), capture_output=True,
-                           text=True, timeout=30).stdout.strip()
-    if base and base == fixed:
-        print("correction check: NOTE -- move is byte-identical with and without `correction` "
-              "present. Expected if your handler is deterministic and never emits an invalid "
-              "move in the first place (like the reference baseline) -- it will never actually "
-              "receive a real correction to react to. But if your handler IS meant to react to "
-              "`correction` (most generated handlers are, per their own AGENTS.md) and picked "
-              "the same move anyway, it may be silently ignoring the field -- check that it "
-              "treats `correction` as a plain string, not an object (CADS-DEMO-sort#15).")
-    else:
-        print("correction check: OK (move changed when `correction` was present)")
-except subprocess.TimeoutExpired:
-    print("correction check: SKIPPED (handler timed out)")
-```
-
-Run it against the non-LLM baseline first, so you know the harness around *you* is what's being
-measured:
+**3. A full local run.** `dryrun.py` is a real file at this repo's own root — a faithful,
+dependency-free port of the bridge's own round loop (`bridge/server.lib.js`), so a local pass with
+it means the same thing a live run would. It drives your handler round after round against a real
+array, applies the moves itself, retries a bad reply with a `correction` up to twice (exactly like
+the real bridge) before counting it as a fault, and reports whether you actually converge inside
+budget. It never touches the network, so it costs you nothing but model calls if your handler is
+itself an LLM call.
 
 ```bash
-python3 dryrun.py ./handlers/reference-sorter.sh    # always faults=0 errors=0 sorted=True
-python3 dryrun.py ./handler.sh                      # now yours
+python3 dryrun.py ./handlers/reference-sorter.sh --seed 42 --len 8   # always faults=0 sorted=True
+python3 dryrun.py ./handler.sh --seed 42 --len 8                     # now yours
+python3 dryrun.py ./handler.sh --correction-check                    # does it react to `correction`?
 ```
 
-On Windows (from Git Bash), the launcher is `python`, not `python3`:
-
-```bash
-python dryrun.py ./handlers/reference-sorter.sh
-python dryrun.py ./handler.sh
-```
+On Windows (from Git Bash), the launcher is `python`, not `python3`. `--array 5,3,8,1,9,2` pins an
+exact array instead of a random one (useful to reproduce this doc's own numbers, or to re-run the
+identical array twice and confirm your handler is deterministic — see
+`python3 dryrun.py --help` for the full flag list, including `--budget` and `--timeout`).
 
 You are ready to go live when `faults=0` and `sorted=True`. Beating the reference sorter's
-`rounds` is the actual game — the baseline is deliberately simple and explainable, not fast. A
-nonzero `errors` count on an otherwise-good run isn't a verdict on your handler at all — re-run to
-confirm before you read anything into it. The `correction check` line is a second, narrower
-signal: `OK` proves your handler genuinely reacts to `correction`; a `NOTE` isn't automatically a
-problem (see the check's own message for when it's expected), but if your `AGENTS.md` describes
-reacting to `correction` and this still says `NOTE`, that mismatch is worth chasing down.
+`rounds` is the actual game — the baseline is deliberately simple and explainable, not fast. The
+`correction check` line is a second, narrower signal: `OK` proves your handler genuinely reacts to
+`correction`; a `NOTE` isn't automatically a problem (see the check's own message for when it's
+expected), but if your `AGENTS.md` describes reacting to `correction` and this still says `NOTE`,
+that mismatch is worth chasing down.
 
 **If your handler is generated code** (the recommended path, via the `sort-arena-harness` skill):
 run `dryrun.py` **twice** against the exact same array (its third argument fixes the seed instead
@@ -348,6 +244,9 @@ participant's old grant no longer registers as a member).
 - [Change the algorithm]({{ '/tutorials/change-the-algorithm/' | relative_url }}) — build a
   merge-sort participant with the same skill, and see a real, measured answer for what this
   harness's move contract actually costs an `O(n log n)` algorithm.
+- [Non-adjacent swaps]({{ '/tutorials/non-adjacent-swaps/' | relative_url }}) — write a comb-sort
+  handler by hand, no skill, and see a real infinite loop caught by `dryrun.py` before it ever
+  reached the arena.
 - [Why generate code, not live decisions]({{ '/explanation/why-generate-not-decide/' | relative_url }})
   — the full evidence behind this harness's design.
 - [The move protocol]({{ '/reference/move-protocol/' | relative_url }}) — the authoritative

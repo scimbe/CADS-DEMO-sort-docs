@@ -22,6 +22,9 @@ running visualization, not a static mockup.
 - [Change the algorithm]({{ '/tutorials/change-the-algorithm/' | relative_url }}) — the same skill,
   a genuinely different algorithm (merge sort), and a real, measured answer to what this specific
   harness actually costs an `O(n log n)` algorithm versus a simpler one.
+- [Non-adjacent swaps]({{ '/tutorials/non-adjacent-swaps/' | relative_url }}) — skip the skill
+  entirely and write a comb-sort handler by hand from the move contract alone; catches a real
+  infinite loop along the way.
 
 ## Sections
 
