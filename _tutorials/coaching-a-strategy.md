@@ -48,11 +48,19 @@ architecture.
 
 ## What's actually running today, and what a fresh test finds
 
-That architecture is retired. `algorithm-coached-claude` now runs on the same generated-code
-harness as every other participant in this repo: `AGENTS.md` is the spec, `generate.sh` writes
+That architecture is retired for **this** participant. `algorithm-coached-claude` now runs on the
+same generated-code harness as `bubble-sort-claude` — the only other two-stage participant this
+repo ships: `AGENTS.md` is the spec, `generate.sh` writes
 `participants/algorithm-coached-claude/generated/handler.py` once, and `handler.sh` execs that
 file — zero live model calls happen during a real run today. Reading the generated code shows the
-same direct-placement logic the coaching document describes, but stated as plain, fixed Python:
+same direct-placement logic the coaching document describes, but stated as plain, fixed Python.
+
+Not every shipped participant migrated, deliberately: `chaotic-claude`, `minimal-claude`, and
+`verbose-reasoner-claude` still make a live per-round `claude -p` call and have no `generate.sh` —
+they're the control group this repo keeps on purpose, showing what harness variation alone (not
+code generation) does to the numbers. `minimal-claude`'s own README states this explicitly: it's
+"what you get with nothing added." So "retired" describes this one participant's own history, not
+a repo-wide architecture change.
 
 ```python
 def find_placement(array):

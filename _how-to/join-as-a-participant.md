@@ -146,8 +146,10 @@ expected), but if your `AGENTS.md` describes reacting to `correction` and this s
 that mismatch is worth chasing down.
 
 **If your handler is generated code** (the recommended path, via the `sort-arena-harness` skill):
-run `dryrun.py` **twice** against the exact same array (its third argument fixes the seed instead
-of drawing a fresh random one). Identical output both times is what proves it's real, reliable,
+run `dryrun.py` **twice** against the exact same array (`--seed 42`, or `--array 5,3,8,1,9,2` for
+a fully explicit one, fixes it instead of drawing a fresh random one each time — `dryrun.py` has
+no positional array argument, only `handler` itself). Identical output both times is what proves
+it's real, reliable,
 deterministic code rather than a live guess that happened to land once — see the
 [first-participant tutorial]({{ '/tutorials/first-participant/' | relative_url }}) for why that
 distinction is the actual point of this exercise. A live-decision handler will *not* generally

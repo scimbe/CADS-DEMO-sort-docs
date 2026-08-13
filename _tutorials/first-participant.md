@@ -98,7 +98,10 @@ cycle was needed here.
 
 Main dry run, `--seed 42 --len 8`, array `[82, 15, 4, 95, 36, 32, 29, 18]` → sorted correctly in
 **43 rounds** (25 comparisons, 17 swaps), ~3.2s for the whole run. Also clean on: already-sorted,
-reversed, heavy duplicates, n=2, and n=21/22/24 (301/278/309 rounds).
+reversed, heavy duplicates, n=2, and — **with `--budget 600`, since a coached bubble sort's real
+worst case at this length is well past `dryrun.py`'s 200 default** (the GUI's own Round Budget
+field defaults to 600 for exactly this reason) — n=21/22/24 (301/278/309 rounds). Running any of
+these three at the 200 default reports `sorted=False`, budget exhausted, not a broken handler.
 ```
 
 Passing on the first try is not the common case worth designing this tutorial around — a real
