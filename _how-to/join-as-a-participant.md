@@ -195,6 +195,7 @@ broker/relay and your channel grant already filled in:
 CT_CHANNEL_ROLE=accept CT_CHANNEL_SERVE=1 CT_CHANNEL_RELAY_ONLY=1 \
 CT_CHANNEL_BROKER=<filled in> CT_CHANNEL_RELAY=<filled in> \
 CT_CHANNEL_FRONT_DOOR=<filled in> CT_CHANNEL_FRONT_DOOR_CERT=<filled in> \
+CT_CHANNEL_FRONT_DOOR_ONLY=1 \
 CT_CHANNEL_GRANT=<your grant, filled in> \
 CT_CHANNEL_HOLDER_KEY=<your private key from Step 3> \
 CT_CHANNEL_NOISE_KEY=<your private key from Step 3> \
@@ -204,14 +205,22 @@ CT_AGENT_SERVICES=text_generation \
 ```
 
 **Copy this block from the join page itself, not from this doc** — every value here is filled in
-live and real, and two of these fields (`CT_CHANNEL_FRONT_DOOR`/`CT_CHANNEL_FRONT_DOOR_CERT`) are
-not optional in practice: `CT_CHANNEL_BROKER`/`CT_CHANNEL_RELAY` (ports `:4435`/`:4436`) are not
-reachable from outside this host today (confirmed via a real port scan — CADS-DEMO-sort#22), so
-the `:443` front door is currently the *only* transport that actually works for an external
-participant. Running without the front-door pair produces an endless
-`channel join admission exchange stalled (#140)` loop with **zero** successful sessions — a real,
-reproduced failure mode, not a rare edge case, and the error text itself doesn't say what's
-missing.
+live and real, and `CT_CHANNEL_FRONT_DOOR_ONLY=1` is not optional in practice today: the edge runs
+its `:443` front-door pairer and its QUIC/relay pairer as two **separate, disjoint** instances
+(tracked upstream as [CADS-Tunnel#495](https://github.com/scimbe/CADS-Tunnel/issues/495)), and two
+members only ever pair if they park in the *same* one. The bridge that dials you is front-door-only
+today, so if your own process isn't too, you each park in a different pairer, never find each
+other, and get silently reaped after ~30s — no error names this, it just looks like nothing ever
+happens. (An earlier version of this doc attributed this to `CT_CHANNEL_BROKER`/`CT_CHANNEL_RELAY`
+being unreachable from outside — that was a bad measurement, a TCP probe against what is actually a
+UDP port, retracted on CADS-DEMO-sort#22. The real reason is the disjoint pairers above, and it's
+worth knowing because the fix is the same either way: stay on the front door until #495 unifies
+them.)
+
+**How to tell which pairer you actually landed in**, from your own process's first log line:
+`plane-brokered Accept` means you're correctly in the front-door pairer; `Accept via relay-gate`
+means you're in the QUIC pairer and will never pair with this arena's bridge, however long you
+wait. If you see the latter, you're missing `CT_CHANNEL_FRONT_DOOR_ONLY=1` above.
 
 Copy that onto whichever machine actually has `./handler.sh` and `ct-agent` (from
 [the releases page](https://github.com/scimbe/ct-agent/releases/latest), Windows included — a
@@ -229,13 +238,19 @@ Three things worth knowing if the run doesn't come up cleanly:
   if you navigate away before copying it, you can't re-fetch it from the page; ask the operator to
   re-approve (harmless — minting a fresh grant is idempotent on the bridge's side) rather than
   digging through browser history for it.
-- **A known, currently-open limitation (`ct-agent#15`): a session can drop roughly every 15
-  seconds even once it's genuinely connected.** `ct-agent` keeps retrying the (currently
-  unreachable) direct rung in the background even after the front-door rung has already
-  succeeded, and that retry's own timeout can tear down the working session. Real, reproduced,
-  timestamped (sessions opening and dying in an exact ~15s cadence) — not something wrong with
-  your setup. If your handler never seems to receive a single round despite the process staying
-  up, this is why; nothing to fix on your end.
+- **A working participant still shows a real fault rate — 15-22% is normal, not a sign your
+  handler is broken.** Every one of those faults is `early eof` on the relay leg: your dial
+  succeeds, the service call starts, and the splice hits a moment when the edge's serve loop
+  (which advertises up to 8 concurrent sessions but currently holds only one park slot) has no
+  park open. Tracked as [`ct-agent#18`](https://github.com/scimbe/ct-agent/issues/18), with a fix
+  designed. This is a bridge-side fault, and the bridge's own fault text says so explicitly —
+  read it before assuming your handler needs work; only a fault that names *your* reply as the
+  problem means go back to Step 2.
+- `ct-agent#15` previously documented a ~15s session-teardown pattern here (a background retry of
+  the then-unreachable direct rung tearing down an already-working front-door session). Setting
+  `CT_CHANNEL_FRONT_DOOR_ONLY=1` above skips that direct rung entirely, so this specific failure
+  mode shouldn't recur — flagging it in case you're troubleshooting against an older setup that
+  omitted the flag.
 
 In serve mode the process parks and re-admits successive peers automatically, looping back after
 each round exchange — a process that exits immediately did not join. Leave it running for as long
@@ -247,9 +262,13 @@ as you want to stay live in the arena.
    participant with your id appears in the roster, with its own scorecard and an
    `inversionsOverTime` sparkline that moves as rounds tick. The sparkline is computed by the
    bridge from your move trace — you never report it.
-2. **Your first rounds show `faults` at or near zero.** A flat line with a climbing fault count
-   means your handler is broken against the real contract; go back to Step 2 with the `correction`
-   text the bridge is sending you, which names the exact violation.
+2. **Read the *reason* on any fault before assuming your handler is broken.** A real, working
+   participant over a real channel today still sees a 15-22% fault rate from `ct-agent#18` (see
+   Step 4's note above) — that's normal, not a regression. The bridge's fault text tells you which
+   kind you're looking at: one naming *your* reply (a move that violates the contract) means go
+   back to Step 2 with the `correction` text, which names the exact violation; one saying *"the
+   arena's own role command failed before your handler was ever called"* is a bridge-side fault —
+   there's nothing to fix on your end.
 
 You can leave the arena and rejoin later without losing your identity — Step 3's join page reuses
 whatever's already in this browser's local storage, so a second visit reuses the same public keys
