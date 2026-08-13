@@ -28,6 +28,9 @@ running visualization, not a static mockup.
 - [Coaching a strategy]({{ '/tutorials/coaching-a-strategy/' | relative_url }}) — a real bug from
   before this repo's own harness migration, and why it disappeared once a live per-round decision
   became fixed, generated code instead.
+- [Partition mode]({{ '/tutorials/partition-mode/' | relative_url }}) — a live run where three
+  participants finish their segments perfectly and the arena still, correctly, reports the whole
+  array unsorted.
 
 ## Sections
 
