@@ -25,6 +25,9 @@ running visualization, not a static mockup.
 - [Non-adjacent swaps]({{ '/tutorials/non-adjacent-swaps/' | relative_url }}) — skip the skill
   entirely and write a comb-sort handler by hand from the move contract alone; catches a real
   infinite loop along the way.
+- [Coaching a strategy]({{ '/tutorials/coaching-a-strategy/' | relative_url }}) — a real bug from
+  before this repo's own harness migration, and why it disappeared once a live per-round decision
+  became fixed, generated code instead.
 
 ## Sections
 

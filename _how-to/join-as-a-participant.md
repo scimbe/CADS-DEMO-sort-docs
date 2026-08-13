@@ -247,6 +247,8 @@ participant's old grant no longer registers as a member).
 - [Non-adjacent swaps]({{ '/tutorials/non-adjacent-swaps/' | relative_url }}) — write a comb-sort
   handler by hand, no skill, and see a real infinite loop caught by `dryrun.py` before it ever
   reached the arena.
+- [Coaching a strategy]({{ '/tutorials/coaching-a-strategy/' | relative_url }}) — a real bug from
+  before this repo's own harness migration, and why generated code closed it for free.
 - [Why generate code, not live decisions]({{ '/explanation/why-generate-not-decide/' | relative_url }})
   — the full evidence behind this harness's design.
 - [The move protocol]({{ '/reference/move-protocol/' | relative_url }}) — the authoritative
