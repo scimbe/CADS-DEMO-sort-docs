@@ -192,6 +192,7 @@ broker/relay and your channel grant already filled in:
 ```bash
 CT_CHANNEL_ROLE=accept CT_CHANNEL_SERVE=1 CT_CHANNEL_RELAY_ONLY=1 \
 CT_CHANNEL_BROKER=<filled in> CT_CHANNEL_RELAY=<filled in> \
+CT_CHANNEL_FRONT_DOOR=<filled in> CT_CHANNEL_FRONT_DOOR_CERT=<filled in> \
 CT_CHANNEL_GRANT=<your grant, filled in> \
 CT_CHANNEL_HOLDER_KEY=<your private key from Step 3> \
 CT_CHANNEL_NOISE_KEY=<your private key from Step 3> \
@@ -200,13 +201,23 @@ CT_AGENT_SERVICES=text_generation \
   ct-agent channel
 ```
 
+**Copy this block from the join page itself, not from this doc** — every value here is filled in
+live and real, and two of these fields (`CT_CHANNEL_FRONT_DOOR`/`CT_CHANNEL_FRONT_DOOR_CERT`) are
+not optional in practice: `CT_CHANNEL_BROKER`/`CT_CHANNEL_RELAY` (ports `:4435`/`:4436`) are not
+reachable from outside this host today (confirmed via a real port scan — CADS-DEMO-sort#22), so
+the `:443` front door is currently the *only* transport that actually works for an external
+participant. Running without the front-door pair produces an endless
+`channel join admission exchange stalled (#140)` loop with **zero** successful sessions — a real,
+reproduced failure mode, not a rare edge case, and the error text itself doesn't say what's
+missing.
+
 Copy that onto whichever machine actually has `./handler.sh` and `ct-agent` (from
 [the releases page](https://github.com/scimbe/ct-agent/releases/latest), Windows included — a
 downloaded `.exe` just runs, no build step). Run it there. `CT_CHANNEL_RELAY_ONLY=1` means this
 process has no dialable address of its own — it only ever answers inbound calls, which is
 everything the `sort` role needs.
 
-Two things worth knowing if the run doesn't come up cleanly:
+Three things worth knowing if the run doesn't come up cleanly:
 
 - **`CT_AGENT_SERVICES` is `text_generation`**, the closed `ServiceType` your handler is served
   under — not the same variable as `CT_AGENT_OFFER_SERVICES`, and not the string `sort` (`sort` is
@@ -216,6 +227,13 @@ Two things worth knowing if the run doesn't come up cleanly:
   if you navigate away before copying it, you can't re-fetch it from the page; ask the operator to
   re-approve (harmless — minting a fresh grant is idempotent on the bridge's side) rather than
   digging through browser history for it.
+- **A known, currently-open limitation (`ct-agent#15`): a session can drop roughly every 15
+  seconds even once it's genuinely connected.** `ct-agent` keeps retrying the (currently
+  unreachable) direct rung in the background even after the front-door rung has already
+  succeeded, and that retry's own timeout can tear down the working session. Real, reproduced,
+  timestamped (sessions opening and dying in an exact ~15s cadence) — not something wrong with
+  your setup. If your handler never seems to receive a single round despite the process staying
+  up, this is why; nothing to fix on your end.
 
 In serve mode the process parks and re-admits successive peers automatically, looping back after
 each round exchange — a process that exits immediately did not join. Leave it running for as long
