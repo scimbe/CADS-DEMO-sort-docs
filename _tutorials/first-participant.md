@@ -155,6 +155,21 @@ arena:** verify it points at [Join as a participant]({{ '/how-to/join-as-a-parti
 and not at hand-editing a bridge config file — the self-service waiting room described there is
 the only real path today; anything else in a generated README is stale.
 
+## Step 5 — watch it sort
+
+Everything above is local verification: `--selftest`, a dry run, determinism, the correction path.
+None of it puts your handler on screen — and the visualization is the actual payoff the homepage
+advertises ("a real, running visualization, not a static mockup"). `index.html`'s default-selected
+**Solo run** tab does exactly this: pick your participant, an array length, a round budget, run it,
+and watch a live bar visualization, a round timeline colored by compare/swap/fault/done, and a
+scorecard fill in as your handler actually sorts (CADS-DEMO-sort#22 found this step missing from
+every tutorial in this repo, despite being the single most convincing thing in the project).
+
+You don't need the hosted arena or a join request to see this — [Run the arena
+locally]({{ '/how-to/run-the-arena-locally/' | relative_url }}) gets your own generated handler
+into that same GUI with zero dependencies, no network, and no operator, using nothing but the
+`node`/`python3` you already have.
+
 ## Once your service is reliable: go live
 
 Turning your generated handler into something `sort.bunsenbrenner.org` actually calls is a

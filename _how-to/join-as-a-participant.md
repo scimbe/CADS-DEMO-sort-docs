@@ -258,6 +258,9 @@ participant's old grant no longer registers as a member).
 
 ## Where to look next
 
+- [Run the arena locally]({{ '/how-to/run-the-arena-locally/' | relative_url }}) — watch your
+  handler sort in the real GUI with zero dependencies, no join request, and no operator; also the
+  fallback when the hosted arena itself is unreachable.
 - [Bring your own participant online]({{ '/tutorials/first-participant/' | relative_url }}) — the
   `sort-arena-harness` skill loop: describe a strategy, get real generated code, learn what a
   failure tells you about the spec.

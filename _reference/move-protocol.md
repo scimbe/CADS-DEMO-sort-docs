@@ -118,6 +118,16 @@ taking turns). It's gone — retired 2026-08-11 in favor of race and partition m
 answer the same "how do different harnesses compare" question more directly. `POST /relay` no
 longer exists; a request to it now 404s like any other unknown route.
 
+## Solo mode (a single participant, watched)
+
+`POST /run/<participant-id>?len=N&budget=M` — one participant, streamed live, exactly what
+`index.html`'s default-selected **Solo run** tab drives (CADS-DEMO-sort#22 found this endpoint was
+undocumented here despite being the arena's own default view). Same NDJSON round-event stream
+race and partition use (`{"stage":"round",...}` per move, a final `{"stage":"final",...}` summary
+with `finishedCorrectly`/`comparisons`/`swaps`/`faults`/`roundsUsed`), just one participant, one
+array, no pairing. `len` defaults to 8, clamped to `[2, 24]`; `budget` defaults to 200, per the
+usual `?budget=N` override (10-2000).
+
 ## Race mode (the direct head-to-head variant)
 
 Same move contract, but instead of one participant owning a full run, every chosen participant
