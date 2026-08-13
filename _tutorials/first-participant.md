@@ -170,9 +170,17 @@ locally]({{ '/how-to/run-the-arena-locally/' | relative_url }}) gets your own ge
 into that same GUI with zero dependencies, no network, and no operator, using nothing but the
 `node`/`python3` you already have.
 
-## Once your service is reliable: go live
+## Once your service is reliable: two directions from here
 
-Turning your generated handler into something `sort.bunsenbrenner.org` actually calls is a
-separate, self-service step — no CLI, no operator file edit, just a public waiting room. See
+**Go deeper into the harness** — the natural next step: [Evolve the harness — from "it sorts" to
+"it IS bubble sort, provably"]({{ '/tutorials/evolve-to-bubble-sort/' | relative_url }}) takes the
+participant you just built and steers it toward a *named, mechanically checkable* algorithm using
+`dryrun.py`'s property checks (`--require-adjacent`, `--require-optimal-swaps`) as a goal line and
+a verification hook as the referee. That's where the spec-tightening loop you just practiced
+becomes a real engineering workflow.
+
+**Or go live now**: turning your generated handler into something `sort.bunsenbrenner.org`
+actually calls is self-service — sign in with your Keycloak account (the login is the
+legitimization), submit, get approved automatically, run the serve command it hands you. See
 [Join as a participant]({{ '/how-to/join-as-a-participant/' | relative_url }}) for the full
 walkthrough.

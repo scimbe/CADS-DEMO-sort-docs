@@ -1,7 +1,7 @@
 ---
 title: Change the algorithm — what the harness actually costs you
 description: Build a merge-sort participant with the same skill, and find out why it doesn't beat insertion sort here.
-order: 2
+order: 3
 ---
 
 # Change the algorithm — what the harness actually costs you

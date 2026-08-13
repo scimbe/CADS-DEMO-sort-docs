@@ -1,7 +1,7 @@
 ---
 title: Partition mode — when every piece is sorted and the whole still isn't
 description: A live, reproducible run against the real arena, where three participants finish their segments perfectly and the harness still reports the array unsorted.
-order: 5
+order: 6
 ---
 
 # Partition mode — when every piece is sorted and the whole still isn't

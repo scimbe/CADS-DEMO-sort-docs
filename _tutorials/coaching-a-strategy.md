@@ -1,7 +1,7 @@
 ---
 title: Coaching a strategy — and a bug the harness fixed for free
 description: The same coached selection-sort strategy, before and after this project's own harness migration — a real bug that disappeared not because the algorithm changed, but because who executes it did.
-order: 4
+order: 5
 ---
 
 # Coaching a strategy — and a bug the harness fixed for free

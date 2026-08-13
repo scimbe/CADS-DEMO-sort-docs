@@ -1,7 +1,7 @@
 ---
 title: Non-adjacent swaps — writing a handler by hand, no skill
 description: Build a comb-sort participant directly from the move contract (no CLI, no code generation), and find a real infinite loop before it ever goes near the arena.
-order: 3
+order: 4
 ---
 
 # Non-adjacent swaps — writing a handler by hand
