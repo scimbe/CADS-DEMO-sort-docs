@@ -17,6 +17,11 @@ matter which textbook algorithm chose them. The lever it named but didn't use wa
 swaps — moving a value more than one slot per round. This tutorial uses that lever, and finds a
 real bug in the process worth knowing about before you reach for it yourself.
 
+The finished, verified handler is a real file in the repo —
+[`handlers/comb-sort.sh`](https://github.com/scimbe/CADS-DEMO-sort/blob/main/handlers/comb-sort.sh)
+— not just the fragments quoted below. Clone it and run it yourself rather than retyping anything
+here; that's the whole point of a "manual fastest start" tutorial.
+
 The algorithm is comb sort: compare pairs a fixed **gap** apart instead of only adjacent pairs,
 swap out-of-order ones, then shrink the gap (here by a factor of 1.3, the usual choice) each pass
 you complete without a violation, down to gap 1 — at which point a clean pass means the array is
@@ -50,8 +55,8 @@ This looks reasonable, dry-ran clean on one seed, and was wrong.
 ## Step 2 — a real infinite loop, caught before it ever reached the arena
 
 Running the handler above through `dryrun.py` — the same script now committed at this repo's own
-root, `python3 dryrun.py ./handler.sh --seed 1 --len 12` — five random 12-element arrays produced
-this:
+root, `python3 dryrun.py ./handlers/comb-sort.sh --seed 1 --len 12` — five random 12-element arrays
+produced this:
 
 ```
 seed 1: rounds=200 comparisons=199 swaps=1  faults=0 sorted=False  (budget exhausted)
