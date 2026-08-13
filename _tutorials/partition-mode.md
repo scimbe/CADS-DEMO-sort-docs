@@ -25,9 +25,10 @@ segment-local `i`/`j` back to the whole array's real position.
 
 ## A real run against the live arena, verbatim
 
-Three of this repo's shipped participants are currently reachable and working (`windows-selection`
-is not, tracked separately on [`ct-agent#15`](https://github.com/scimbe/ct-agent/issues/15) — this
-run deliberately only uses participants confirmed live, not a hand-picked example):
+Three of this repo's shipped participants are currently reachable and working (a self-service
+remote participant, `windows-selection-e2e`, is not, tracked separately on
+[`ct-agent#15`](https://github.com/scimbe/ct-agent/issues/15) — this run deliberately only uses
+participants confirmed live, not a hand-picked example):
 
 ```bash
 curl -s -N -X POST "https://sort.bunsenbrenner.org/partition?ids=reference-sorter,bubble-sort-claude,algorithm-coached-claude&len=18"
