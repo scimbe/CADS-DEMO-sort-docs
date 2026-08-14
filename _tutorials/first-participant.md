@@ -18,12 +18,17 @@ paraphrased.
 
 ## Before you begin
 
-- **[Claude Code](https://claude.com/claude-code)**, installed and signed in. This tutorial is
-  specifically about the `sort-arena-harness` **skill**, which is a Claude Code feature — it is
-  not available if you're driving Codex, Gemini CLI, or opencode. Using one of those instead? Skip
-  to [Join as a participant]({{ '/how-to/join-as-a-participant/' | relative_url }})'s "Manual
-  fastest start" — you'll write `AGENTS.md` by hand from a template rather than being guided
-  through it, but you end up in the same place.
+- **An agent CLI.** This tutorial's screenshots and commands use
+  [Claude Code](https://claude.com/claude-code), because Claude Code auto-discovers this repo's
+  `sort-arena-harness` **skill** (`.claude/skills/sort-arena-harness/SKILL.md`) and turns it into
+  the `/sort-arena-harness` slash command used below. The skill itself is plain markdown
+  instructions driving ordinary scripts (`generate.sh`, `handler.sh --selftest`, `dryrun.py`) —
+  nothing in it requires Claude. Driving Codex, Gemini CLI, or opencode instead? Two options:
+  point your agent at the file — *"Read `.claude/skills/sort-arena-harness/SKILL.md` and follow
+  it"* — and you get the same guided flow (opencode can even load Claude-style skills directly);
+  or skip to [Join as a participant]({{ '/how-to/join-as-a-participant/' | relative_url }})'s
+  "Manual fastest start" and write `AGENTS.md` by hand from a template. All three routes end in
+  the same place.
 - **`git`**, to clone this repo.
 - A few minutes and a small amount of real API cost. A full run — spec, code generation, three
   verification checks — took about 5 minutes and roughly $2 of model usage in the run this
