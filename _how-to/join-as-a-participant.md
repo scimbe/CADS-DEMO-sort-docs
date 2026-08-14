@@ -161,9 +161,11 @@ difference generated code is meant to remove.
 Open [sort.bunsenbrenner.org/join.html](https://sort.bunsenbrenner.org/join.html). The page sits
 behind the deployment's Keycloak login — **your login IS your legitimization**: an anonymous
 visitor is redirected to sign in first, and once you're through, your submission is **approved
-automatically on the spot**. There is no waiting room and no operator review step anymore (the
-operator's role is moderation after the fact — they can still revoke a participant). No CLI
-needed for any of this:
+automatically on the spot**. There is no routine waiting room and no operator review step anymore
+(the operator's role is moderation after the fact — they can still revoke a participant). The one
+thing auto-approval does depend on is entirely operator-side — see ["If your submission stays
+'waiting'"](#if-your-submission-stays-waiting) right after the steps below for how its absence
+looks from your seat and what to do about it. No CLI needed for any of this:
 
 1. The page generates a real Agent-Fabric channel identity (a holder keypair and a noise keypair)
    **entirely inside your browser tab**, using a WebAssembly build of `ct-agent`'s own crypto
@@ -193,10 +195,37 @@ needed for any of this:
 
    ![join.html after submitting: waiting for an operator to review the request, polling automatically]({{ '/assets/09-join-waiting-for-approval.png' | relative_url }})
 
+### If your submission stays "waiting" {#if-your-submission-stays-waiting}
+
+Auto-approval is performed by the bridge itself, but only while the bridge holds a **live
+operator credential** for the control plane ("automation armed"). Historically that credential
+was a 30-minute session an operator arms by hand and re-arms when it expires; the deployment is
+moving to a standing service-account credential precisely so that it is always armed. Either way,
+none of this is visible or fixable from the join page — what you *can* see is the outcome, in the
+page's own status line right after you submit:
+
+- **"Approved automatically … fetching your grant…"** — the normal case. Automation was armed,
+  approval already happened inline with your submit, and the page's status poll (every 4 s)
+  delivers your grant on its next tick. Continue to Step 4.
+- **"Request submitted. Waiting for an operator to review it…"** — automation was **not** armed
+  at the moment you submitted. Your request is not lost and nothing about it failed: it was
+  cryptographically verified and queued, and it is visible to the operator — but nothing will
+  approve it until the operator side comes back, and the page will poll indefinitely in the
+  meantime. **Wait, or contact the operator; do not resubmit.** Resubmitting the same id while
+  automation is down just replaces one queued request with an identical one, and a burst of
+  retries from a single account looks like abuse — a retry storm from one leftover browser tab
+  once flooded this very arena's edge for hours
+  ([CADS-DEMO-sort#22](https://github.com/scimbe/CADS-DEMO-sort/issues/22)).
+- **"automated approval failed …"** — automation is armed but could not finish (grant-minting or
+  control-plane registration broke mid-flight). Also operator-side: nothing about your handler or
+  your keys caused it, and retrying won't mint the missing pieces. Contact the operator with the
+  participant id you used; the detail is in the bridge log.
+
 ## Step 4 — Serve your handler
 
-Within a second or two of submitting, the join page updates itself with a ready-to-run command,
-broker/relay and your channel grant already filled in:
+Within a second or two of submitting — assuming the normal auto-approved path above, not the
+"waiting" one — the join page updates itself with a ready-to-run command, broker/relay and your
+channel grant already filled in:
 
 ```bash
 CT_CHANNEL_ROLE=accept CT_CHANNEL_SERVE=1 CT_CHANNEL_RELAY_ONLY=1 \
