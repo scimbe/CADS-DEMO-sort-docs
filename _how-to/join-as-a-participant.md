@@ -198,11 +198,15 @@ looks from your seat and what to do about it. No CLI needed for any of this:
 ### If your submission stays "waiting" {#if-your-submission-stays-waiting}
 
 Auto-approval is performed by the bridge itself, but only while the bridge holds a **live
-operator credential** for the control plane ("automation armed"). Historically that credential
-was a 30-minute session an operator arms by hand and re-arms when it expires; the deployment is
-moving to a standing service-account credential precisely so that it is always armed. Either way,
-none of this is visible or fixable from the join page — what you *can* see is the outcome, in the
-page's own status line right after you submit:
+operator credential** for the control plane ("automation armed"). Since 2026-08-14 this arena
+runs on a **standing service-account credential**: automation is armed at boot and survives
+bridge redeploys, verified end-to-end the same day (a fresh account's submission came back
+`approved` with the grant on the first status poll — including across a redeploy that wiped the
+old-style browser session). Historically the credential was a 30-minute session an operator
+armed by hand, and the "waiting" case below was a routine occurrence; today it indicates a
+deployment running without the service-account tier. Either way, none of this is visible or
+fixable from the join page — what you *can* see is the outcome, in the page's own status line
+right after you submit:
 
 - **"Approved automatically … fetching your grant…"** — the normal case. Automation was armed,
   approval already happened inline with your submit, and the page's status poll (every 4 s)
@@ -239,6 +243,12 @@ CT_AGENT_SERVICE_HANDLER_CMD=./handler.sh \
 CT_AGENT_SERVICES=text_generation \
   ct-agent channel
 ```
+
+Use **ct-agent v0.4.16 or newer** for this. Older versions carry a rendezvous-ack read bug
+that made the *first* pairing after any fresh start or reconnect stall for 45–100 seconds
+(fixed in v0.4.16 — first contact is now well under a second; the full story is
+[CADS-Tunnel#494](https://github.com/scimbe/CADS-Tunnel/issues/494)). Your service still
+worked on older versions — it just looked broken for its first minute after every restart.
 
 **Copy this block from the join page itself, not from this doc** — every value here is filled in
 live and real, and `CT_CHANNEL_FRONT_DOOR_ONLY=1` is not optional in practice today: the edge runs
