@@ -110,20 +110,23 @@ looks like: real numbers, real shapes tested, no hand-waving.
 
 ## What a real failure looks like, and what actually fixes it
 
-Here is a real one, from building the `bubble-sort-claude` participant this project ships with.
-The strategy was simple: visit adjacent pairs left to right, swap if out of order, repeat. The
-first version of the spec was dry-run twice and failed both times:
+Here is a real one, from this project's own history: building the `bubble-sort-claude`
+participant this repo ships with. The strategy was simple: visit adjacent pairs left to right,
+swap if out of order, repeat. The first version of the spec was dry-run twice and failed both
+times:
 
 | Run | Array | Result |
 |---|---|---|
 | 1 | `[5,3,8,1,9,2]` | budget exhausted, never sorted |
 | 2 | `[18,60,61,29,26,25]` | budget exhausted, never sorted |
 
-Both failed the identical way: at specific positions, the generated behavior repeatedly compared
-instead of swapping, even though the array plainly showed an out-of-order pair right there. The
-tempting fix is "run it again and hope for a cleaner result." That fix was **not** used, because
-it doesn't actually address anything — an unreliable spec produces unreliable code however many
-times you regenerate it.
+Both failed the identical way: at specific positions, the behavior the spec produced repeatedly
+compared instead of swapping, even though the array plainly showed an out-of-order pair right
+there. The full round-by-round record is preserved in
+[CADS-DEMO-sort#10](https://github.com/scimbe/CADS-DEMO-sort/issues/10) — that issue, not this
+page, is the primary artifact for this story. The tempting fix is "run it again and hope for a
+cleaner result." That fix was **not** used, because it doesn't actually address anything — an
+unreliable spec produces unreliable behavior however many times you re-sample it.
 
 The real fix was to look at *why* the model kept getting that one decision wrong. The spec said
 "remember where you are in a pass" — but the handler is invoked fresh every single round with no
@@ -131,7 +134,34 @@ memory. The instruction was accurate in spirit but didn't say *how* to actually 
 "where you are" from what a stateless call can actually see. Once the spec was rewritten to say
 that explicitly — reconstruct the cursor from the single most recent entry in the round history,
 check the real array directly rather than trying to remember whether a pass had a swap in it — the
-identical two arrays that failed before both converged cleanly, every time, on retest.
+identical two arrays that failed before both converged cleanly, every time, on retest. The
+rewritten spec is the one that ships today as
+[`participants/bubble-sort-claude/AGENTS.md`](https://github.com/scimbe/CADS-DEMO-sort/blob/main/participants/bubble-sort-claude/AGENTS.md)
+— its "Where you are" and "Whether you're done" bullets are the direct fix for this exact
+failure, so you can read the "after" side of the diff even though the "before" no longer exists
+(next paragraph).
+
+**Don't expect to reproduce this failure yourself.** An earlier version of this page presented it
+as if you could; [CADS-DEMO-sort#22](https://github.com/scimbe/CADS-DEMO-sort/issues/22) (item 7)
+tried, hard, and established three things a reader deserves to know up front:
+
+- **The broken spec no longer exists as a file.** It was a hand-built prompt string from before
+  this participant's spec lived in a committed `AGENTS.md`; it was never checked in, so there is
+  no artifact in the repo to re-run. The phrasing quoted above is reconstructed from the failure
+  record in CADS-DEMO-sort#10, not copied from a surviving file.
+- **It predates the generate-once harness.** The failing runs called the model live, once per
+  round. The harness this tutorial teaches was built largely *because* of failures like this one
+  — the evidence page linked below walks that history in order.
+- **Today's models tend to patch this exact gap on their own.** CADS-DEMO-sort#22 deliberately
+  re-created the vague spec — the same "remember where you are in a pass" framing — and the
+  generated handler passed every check first try, because the model silently added a direct
+  sortedness check the spec never asked for. A vague spec that happens to generate working code
+  is still a vague spec: nothing guarantees the next model, or the next regeneration, fills the
+  same gap the same way — which is precisely the reliability point of this tutorial.
+
+So treat this section as a documented case study of the diagnose-tighten-retest loop, not as an
+exercise to replay. The loop is what transfers: when your own generation fails, the failure
+points at a question your spec left unanswered.
 
 That's the actual lesson: **a generated service is only as reliable as the spec's answer to "what
 does the model actually know at the moment it has to decide this?"** A vague spec produces code
