@@ -6,6 +6,20 @@ order: 1
 
 # Bring your own participant online
 
+**Which tutorial should you be reading?** This one and
+[Five seconds to your first sorter]({{ '/tutorials/five-seconds/' | relative_url }}) both end with a
+participant that sorts, and they are not alternatives so much as two different questions.
+
+| | Five seconds | This page |
+|---|---|---|
+| You run | four `cp` commands yourself | the `sort-arena-harness` skill |
+| First result after | 5 seconds, no model call | one guided conversation |
+| Shows you | that harness effects are measurable | how the loop that produces them works |
+
+If you have never run anything here, start there — it costs five seconds and this page reads better
+once something of yours is already sorting. If you want to watch the skill drive the loop, and
+understand what it checks and why, you're in the right place.
+
 The goal of this tutorial is not "get a model to sort a list." It's to understand **what has to
 change in the harness around a model to make the service it produces reliable** — not just
 correct once, but correct the same way every time it's called. That's what "reliable" means here,
