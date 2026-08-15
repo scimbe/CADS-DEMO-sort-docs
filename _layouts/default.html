@@ -56,6 +56,9 @@
  main.content{min-width:0;max-width:100%}
  main.content img{max-width:100%;height:auto}
  table{display:block;overflow-x:auto;max-width:100%}
+ /* Inline code cannot wrap at spaces when the token has none -- a long flag or hex string then
+    pushes the page sideways on a phone. Only inline code; inside pre the block scrolls instead. */
+ :not(pre) > code{overflow-wrap:anywhere}
  @media (max-width:800px){.layout{flex-direction:column}aside.sidebar{width:100%}}
 </style>
 </head><body>
