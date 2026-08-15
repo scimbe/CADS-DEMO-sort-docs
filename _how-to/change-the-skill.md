@@ -86,6 +86,50 @@ It's stated, it's passed to the model, and it happens anyway in roughly half of 
 that lives only in prose is not a property of the system.** That's the transferable lesson, and the
 fix is to move it: prose → gate.
 
+## First, the cheaper fix: one word
+
+Before building anything, it's worth knowing *why* those compare moves appear — because the answer
+is a rule you can follow for free, and it was not what anyone expected.
+
+Both specifications that produced them contained the word **compare**:
+
+> Scan the array left to right **comparing** each adjacent pair…
+
+Three versions of that same strategy, semantically identical, same model, same time window:
+
+| | Specification | Compare moves across runs |
+|---|---|---|
+| **A** | contains "comparing" | `175 175 175 175 0 175 175 175` |
+| **B** | word removed, nothing else added | `0 0` |
+| **C** | word removed, plus "never spend a move to inspect" | `0 0 0` |
+
+**B is the arm that matters, and it was almost missed.** The first control was C — which changed two
+things at once: it removed the word *and* added an explicit prohibition. That confounds the result,
+so B was run to separate them: wording changed, no prohibition. Same outcome as C.
+
+**The word alone is the cause. The prohibition adds nothing.** Here is B, in full:
+
+> Scan the array from left to right. Whenever an element is larger than the one directly to its
+> right, swap that pair immediately. Once a full pass produces no swaps, the array is sorted and you
+> are done.
+
+Nothing about that says "don't emit compares." It just contains no word that maps onto a move type
+in the contract.
+
+So the rule, and it generalises past this arena:
+
+> **Words in the specification that name things in the contract get taken literally.** `compare`,
+> `swap`, `done` are move types here. Use them for moves you want, and different words for
+> everything else — "when an element is larger than", not "compare the elements".
+
+This is worth sitting with, because it is the harness thesis in miniature. Nobody wrote a rule
+saying "emit a compare move per comparison." The specification said `comparing`, the contract has a
+`compare` move, and the generation step connected them. **The vocabulary of your spec is part of
+your harness** — and it costs rounds in the arena's own scoreboard without ever failing a check.
+
+Which is exactly why the gate below is still worth building: a rule only holds while someone
+remembers it.
+
 ## Building the gate
 
 `dryrun.py` already prints what you need. Turn it into a verdict:

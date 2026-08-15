@@ -67,6 +67,27 @@ That generalizes past sorting, and it's the uncomfortable half of the lesson: **
 measures the wrong dimension makes a better approach look equal or worse.** Before optimizing
 anything against a metric, check that the metric can see the quality you're trying to add.
 
+## The specification's vocabulary is part of the harness
+
+The four layers above make the harness sound like structure — files, scripts, checks. One measured
+result says it reaches further down than that, into word choice.
+
+Two specifications produced participants that spent half their rounds on `compare` moves buying
+nothing. The cause turned out to be that both specifications used the word *comparing*. Rewriting
+one of them with the same meaning and no contract vocabulary — "whenever an element is larger than
+the one directly to its right" — dropped compare moves to zero, without any instruction telling the
+generated code to avoid them.
+
+Nobody wrote a rule connecting the two. The specification said `comparing`, the contract has a
+`compare` move, and the generation step joined them up. That is the harness acting exactly as
+designed, on an input nobody thought of as an input.
+
+The practical form of this is in
+[Change the skill]({{ '/how-to/change-the-skill/' | relative_url }}), with the three-arm measurement
+that separates the wording effect from an explicit prohibition. The conceptual form belongs here:
+**everything the generation step reads is harness**, including the words you thought were just
+description.
+
 ## Why the model is asked once, not every round
 
 The obvious design would be to call the model each round and let it pick the move. The arena did work
