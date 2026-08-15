@@ -52,8 +52,8 @@ silently never fire. A skill that doesn't run is indistinguishable from one that
 
 ## The worked example
 
-Measured across 11 generations from two different specifications: **5 of them emitted `compare`
-moves that nobody asked for.** Same model, same specification text, different draw.
+Measured across 27 usable generations from two different specifications: **most of them emitted
+`compare` moves that nobody asked for** — 5 of the first 11, then 15 of the next 16. Same model, same specification text, different draw.
 
 | | Rounds | Comparisons | Swaps |
 |---|---|---|---|

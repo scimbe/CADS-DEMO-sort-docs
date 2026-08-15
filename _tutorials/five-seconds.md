@@ -102,11 +102,11 @@ python3 "$REPO/dryrun.py" ./handler.sh --seed 42 --len 8 --quiet
 python3 "$REPO/dryrun.py" ./handler.sh --correction-check
 ```
 
-**How long this takes, measured rather than promised:** across 11 generations the median was
-**127 seconds**, with a spread from 38 s to 409 s. Two specifications of quite different complexity
-were interleaved and came out the same (156 s vs 161 s back to back), so the spread is latency, not
-your wording — a fast run is luck, not a faster prompt. Budget a few minutes and don't conclude
-anything from one slow run.
+**How long this takes, measured rather than promised:** across **28 generations** the median was
+**130 seconds**, with a spread from 25 s to 472 s. Two runs out of 28 took longer than five minutes.
+Two specifications of quite different complexity were interleaved and came out the same (156 s vs
+161 s back to back), so the spread is latency, not your wording — a fast run is luck, not a faster
+prompt. Budget a few minutes and don't conclude anything from one slow run.
 
 **A failed generation cannot cost you anything.** The draft is written to a staging file and only
 moved into place once it compiles, so a bad draw leaves your previous handler exactly where it was —
@@ -187,9 +187,14 @@ in, pick an id and a label, run the command the page hands you. See
 
 | Step | Time | Depends on |
 |---|---|---|
-| Clone to running participant | 5 s | nothing — deterministic |
-| Generating your own strategy | 38–409 s, median 127 s | one model call |
+| Clone to running participant | 1–2 s | nothing — deterministic |
+| Generating your own strategy | 25–472 s, median 130 s | one model call |
+| Joining the hosted arena and answering a round | 16 s | nothing — deterministic |
 | Forcing and proving a property | 1 spec line | you |
+
+Measured end to end on one continuous run — empty directory to a participant answering rounds from
+the hosted arena — that came to **43 seconds**, of which 25 s was the model call. With the median
+generation instead it is about 2.5 minutes.
 
 The first row is the one that matters, and it's the reason the scaffold ships a working handler: the
 part you can rely on is deterministic, and the part that varies by a factor of ten only ever upgrades
@@ -203,6 +208,7 @@ interesting.
 
 ---
 
-*Measured on a fresh clone: clone 1 s, scaffold <1 s, first success 5 s (fastest observed 2 s).
-Generation: 11 runs, median 127 s, range 38–409 s, 11/11 produced a contract-passing handler.
-Screenshots are from a locally running arena.*
+*Measured on fresh clones: clone plus scaffold 1–2 s to a contract-passing baseline. Generation:
+28 runs, median 130 s, range 25–472 s, 27 of 28 produced a usable handler on the first or second
+attempt. Full path to answering rounds in the hosted arena: 43 s in one continuous run. Screenshots
+are from a locally running arena and from the hosted one.*
