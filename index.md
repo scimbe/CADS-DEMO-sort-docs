@@ -45,8 +45,8 @@ brings up the same bridge locally in about a minute — every tutorial works aga
 
 ## If you're here to learn the harness, not to sort
 
-Read these three in order. They're the argument, and each one is grounded in measurements from this
-arena rather than assertion:
+Read these four in order. They're the argument, and each one is grounded in measurements from this
+arena rather than assertion — the last one lets you check whether it landed:
 
 1. [Five seconds to your first sorter]({{ '/tutorials/five-seconds/' | relative_url }}) — get
    something running, then see the same model produce measurably different participants.
