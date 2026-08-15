@@ -25,6 +25,12 @@ automatically**; no operator step, no CLI needed until the very last step.
   execute a `.sh` file directly (no shebang support), so `dryrun.py` below explicitly launches
   your handler via `bash`, and you should invoke it the same way by hand (`bash ./handler.sh`,
   not `./handler.sh`, if double-clicking or a bare path doesn't work for you).
+- **On FreeBSD, install the tools first.** A base system has `sh` and nothing else — no `bash`, no
+  `python3`, no `git`. `pkg install -y bash python3 git` covers everything up to Step 3, and `node`
+  is in ports if you also want the [local arena]({{ '/how-to/run-the-arena-locally/' | relative_url }}).
+  There is no `sudo` in the base system either; use `su -m root -c '…'`. Everything through Step 3
+  then behaves exactly as on macOS and Linux — measured, same numbers. Step 4 is where FreeBSD stops:
+  see the platform note there.
 - **A modern browser** — Step 3 (joining) runs entirely in-page, no install. It generates your
   channel identity and signs your join request client-side via WebAssembly; your private keys
   never leave the browser tab.
