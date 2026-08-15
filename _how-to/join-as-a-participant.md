@@ -244,24 +244,18 @@ CT_AGENT_SERVICES=text_generation \
   ct-agent channel
 ```
 
-**Two variables are missing from the block the page gives you, and without them v0.5.0 will not
-start.** Measured today against the live deployment, running the block verbatim:
+**Copy the serve block as one piece, and check nothing was lost on the way.** The block sets a
+dozen variables; if any of them does not survive the trip through your clipboard and terminal,
+`ct-agent` refuses to start and names the missing one:
 
 ```
 Error: "CT_CHANNEL_RELAY required (edge relay host:port)"
 Error: "CT_CHANNEL_LISTEN required (advertised host:port) — or set CT_CHANNEL_RELAY_ONLY=1 …"
 ```
 
-Add both, then it runs:
-
-```bash
-export CT_CHANNEL_RELAY=bunsenbrenner.org:4436
-export CT_CHANNEL_RELAY_ONLY=1
-```
-
-Both values are deployment-wide constants, and the portal's own claim page already emits them
-correctly — the two blocks are complementary, each missing what the other has. Reported; this note
-goes away once the join page emits them too.
+Those errors are good ones — they name the variable and the alternative, so one missing line costs
+one retry, not an investigation. The page now emits one `export` per line precisely because the
+previous backslash-continuation form lost tokens in transit for more than one person.
 
 Use **ct-agent v0.5.0** for this. v0.4.16 remains the hard minimum — below it a rendezvous-ack read
 bug made the *first* pairing after any fresh start or reconnect stall for 45–100 seconds (fixed in
