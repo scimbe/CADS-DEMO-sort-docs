@@ -93,15 +93,16 @@ Here's the real dry-run report, verbatim, because the gap between what you'd exp
 actually happened is the point of this whole tutorial:
 
 ```
-Dry runs (all faults=0, all finished correctly sorted):
+Dry runs (all faults=0, all finished correctly sorted). Every array is written out, so you can
+re-run any row — three of them previously named only a shape, which made them unreproducible:
 
-| Array                  | rounds | compares | swaps |
-|-------------------------|--------|----------|-------|
-| [18,60,61,29,26,25]     | 10     | 0        | 9     |
-| reversed, n=12          | 67     | 0        | 66    |
-| nearly sorted, n=10     | 2      | 0        | 1     |
-| many duplicates, n=10   | 16     | 0        | 15    |
-| already sorted / n=1    | 1      | 0        | 0     |
+| Array                                    | rounds | compares | swaps |
+|------------------------------------------|--------|----------|-------|
+| `18,60,61,29,26,25`                      | 10     | 0        | 9     |
+| `12,11,10,9,8,7,6,5,4,3,2,1` (reversed)  | 67     | 0        | 66    |
+| `1,2,3,4,5,6,7,9,8,10` (nearly sorted)   | 2      | 0        | 1     |
+| `5,5,1,9,1,5,9,1,5,9` (many duplicates)  | 14     | 0        | 13    |
+| `7` (single element)                     | 1      | 0        | 0     |
 ```
 
 And, head-to-head against `handlers/reference-sorter.sh` — the shipped, non-LLM, real insertion
