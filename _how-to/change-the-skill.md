@@ -123,6 +123,34 @@ So the rule, and it generalises past this arena:
 > `swap`, `done` are move types here. Use them for moves you want, and different words for
 > everything else — "when an element is larger than", not "compare the elements".
 
+### The rule is about framing, not vocabulary
+
+That shorthand — *the word is the cause* — turned out to be too simple, and the correction is more
+useful than the original.
+
+The rule now lives in the skill itself, and nine invocations were measured against it: six with a
+compare-free strategy, three with one that says "compare each adjacent pair … keep comparing" four
+times over. **All nine produced zero compare moves**, at exactly 28 rounds — the optimum for the
+test array. Without the rule, the same compare-free strategy produced 80 rounds and 52 compare
+moves.
+
+But the specifications the skill wrote still contain the word — twelve times in the adversarial
+case. It did not avoid the term. It disambiguated it, under a heading of its own:
+
+> **Why "compare" the word is not `compare` the move**
+>
+> The round input already gives you the real, complete `array`. "Comparing" two elements — i.e.
+> reading them and checking their order — costs nothing and is not the contract's `compare` move:
+> that move exists for a live decision-maker who cannot otherwise see …
+
+So the accurate statement is not "avoid the vocabulary". It is: **a move type mentioned neutrally,
+inside a description of what the algorithm does, reads as a step to perform.** Removing the word
+works. Negating it works. Explaining the difference works best — and that last one was the skill's
+idea, not a rule anyone wrote.
+
+The practical form: don't police words, state the distinction once. Then let the gate catch what
+survives.
+
 This is worth sitting with, because it is the harness thesis in miniature. Nobody wrote a rule
 saying "emit a compare move per comparison." The specification said `comparing`, the contract has a
 `compare` move, and the generation step connected them. **The vocabulary of your spec is part of
