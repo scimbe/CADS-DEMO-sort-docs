@@ -131,46 +131,58 @@ your harness** — and it costs rounds in the arena's own scoreboard without eve
 Which is exactly why the gate below is still worth building: a rule only holds while someone
 remembers it.
 
-## Building the gate
+## The gate now ships
 
-`dryrun.py` already prints what you need. Turn it into a verdict:
+When this page was written the check did not exist, so it showed a shell script that grepped
+`dryrun.py`'s output. That is no longer necessary — `--require-no-wasted-compares` landed in
+`0c81457`, in the shape of the two checks beside it:
 
 ```bash
-#!/usr/bin/env bash
-# Gate: fail if the handler spends rounds on compare moves.
-set -u
-out="$(python3 dryrun.py "$1" --seed 42 --len 20 --budget 600 --quiet 2>&1)"
-n="$(printf '%s\n' "$out" | sed -n 's/.*comparisons=\([0-9]*\).*/\1/p' | head -1)"
-if [ "${n:-0}" -gt 0 ]; then
-  echo "GATE FAIL: $n compare moves. The round input already contains the whole array,"
-  echo "           so each one costs a round and buys nothing. Add to AGENTS.md:"
-  echo '           "Never emit compare moves; read the array directly and emit only swaps."'
-  exit 1
-fi
-echo "GATE OK: no wasted compare moves"
+python3 "$REPO/dryrun.py" ./handler.sh --seed 42 --len 12 --quiet \
+  --require-adjacent --require-optimal-swaps --require-no-wasted-compares
 ```
 
-Run it against both kinds of handler:
+Against a handler that spends rounds comparing:
 
 ```
-$ ./gate.sh participants/mysorter/handler.sh
-GATE FAIL: 84 compare moves. The round input already contains the whole array,
-           so each one costs a round and buys nothing. Add to AGENTS.md:
-           "Never emit compare moves; read the array directly and emit only swaps."
+rounds=80 comparisons=52 swaps=27 faults=0 sorted=True inversions=27
+property violation: 52 compare move(s) spent -- the round input already carries the whole
+array, so a compare reveals nothing the handler could not read directly and still costs a
+round (rounds = comparisons + swaps + 1). Fix this in AGENTS.md, not in the generated
+handler: state that the strategy reads the array directly and emits swaps only
 exit=1
+```
 
-$ ./gate.sh participants/baseline/handler.sh
-GATE OK: no wasted compare moves
+And against one that doesn't:
+
+```
+property checks passed: adjacent, no-wasted-compares, optimal-swaps
 exit=0
 ```
 
-Three properties make that a gate rather than a print statement, and all three are worth copying:
+The route from "I noticed something" to "the tool refuses it" was: measure it, build the check
+locally to prove it catches the real case, propose it in the shape of the existing checks, and
+hand it to whoever owns the file. The gate you build yourself is the argument; the merged one is
+the outcome.
 
-- **It exits non-zero.** A human-readable warning gets skimmed; an exit code stops a pipeline.
-- **It names the observation**, not just the verdict — `84 compare moves`, so you know how far off
-  you are.
-- **It says what to change, and where.** `AGENTS.md`, not the generated code. A gate that reports a
-  violation without naming the source file trains people to patch the artifact.
+### Why it was worth the trouble
+
+The strongest case for it turned up after it was written. Invoking `sort-arena-harness` with a
+deliberately compare-free strategy — *"walk the array from left to right and whenever an element is
+larger than the one directly to its right, swap that pair immediately"* — produced a specification
+that **instructs the handler to emit compare moves**, and defends it:
+
+> Else (already in the right order): emit `{"action": "compare", …}`. This still counts as visiting
+> the pair and advancing the cursor next round; **it is not wasted, it is the honest cost of walking
+> every adjacent pair** rather than jumping straight to the ones that need fixing.
+
+It is wasted: the round input carries the whole array, so the ordering can be read without spending
+a round. The result was **80 rounds where 28 suffice** — `52 + 27 + 1` — against an identically
+specified competitor, for identical actual work.
+
+Nothing in the skill's own instructions asks for this, and the contract passed to the model says the
+opposite in as many words. The model wrote the justification by itself. **That is the case a rule
+cannot catch and a gate can** — and it is why both belong in the loop, not one or the other.
 
 ## Wiring it into the skill
 
@@ -178,9 +190,9 @@ Add it to the verification step, next to the checks already there:
 
 ```markdown
 3. Verify what came back, four ways: `handler.sh --selftest`, a local dry run run **twice**
-   on the same array, `dryrun.py`'s `correction check`, and **`./gate.sh` — no compare
-   moves.** The round input already contains the whole array, so a compare move costs a
-   round and reveals nothing.
+   on the same array, `dryrun.py`'s `correction check`, and **`--require-no-wasted-compares`**.
+   The round input already contains the whole array, so a compare move costs a round and
+   reveals nothing.
 ```
 
 And make sure step 4 covers it — the failure branch is the part that has to hold:
@@ -191,9 +203,19 @@ And make sure step 4 covers it — the failure branch is the part that has to ho
    so you know which sentence enforced which property.
 ```
 
+And add the rule that stops it one step earlier, when the specification is written rather than
+after it has been generated from:
+
+```markdown
+1. … when writing AGENTS.md, use `compare`, `swap` and `done` only for moves that should
+   actually be played. For "check how two elements relate", use words that do not name a
+   move type — the array is fully visible every round.
+```
+
 Now regenerate. The gate fails, you add the sentence it named, you regenerate again, and the gate
 passes — and it will keep passing for every participant who uses this skill from now on, including
-the ones who never read this page.
+the ones who never read this page. The rule catches it cheaply when it works; the gate catches it
+when the rule doesn't.
 
 ## What you just did
 
