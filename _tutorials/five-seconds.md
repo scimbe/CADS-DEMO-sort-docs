@@ -118,8 +118,15 @@ first. That was correct at the time and isn't any more.)
 - `correction check: NOTE` is **not** a failure. It's expected for a deterministic handler that
   never emits an invalid move, so it never receives a real correction to react to.
 - Determinism means: same seed twice, identical numbers apart from `wallClockMs`. Run it twice.
-- From `--len 21` upward an adjacent-swap sorter needs `--budget 600`. At the 200 default it reports
-  `sorted=False` — that's the budget, not your handler.
+- **`sorted=False` is usually the budget, not your handler** — and the rule is about *inversions*,
+  not length. An adjacent-swap sorter spends `inversions + 1` rounds, so the 200 default runs out
+  only once the array has ~200 inversions. A random array needs about `n²/4` of them, so lengths up
+  to 24 are normally fine; a *reversed* array needs `n(n-1)/2`, and at `--len 21` that is 210 —
+  measured, it stops at `rounds=200 sorted=False`. Pass `--budget 600` when you feed adversarial
+  arrays. (An earlier version of this page said "from `--len 21` upward you need `--budget 600`.
+  That is true only for the worst case; at `--len 21` with a random array it sorts in 123 rounds.)
+- **`--len` above 24 does not work at all.** `MAX_ARRAY_LEN` is 24, and exceeding it exits 1 with a
+  Python traceback rather than a message. Reported.
 - Never hand-edit `generated/handler.py`. It's a build artifact; `AGENTS.md` is the source. The next
   regeneration overwrites your edit.
 - You do not need to read the generated Python. The three checks are what "it works" means here.
