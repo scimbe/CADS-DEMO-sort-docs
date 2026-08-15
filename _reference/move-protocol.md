@@ -171,3 +171,44 @@ CADS-flappy-demo and CADS-cookbook-demo already use — `CT_AGENT_SERVICE_HANDLE
 `CT_AGENT_SERVICES=text_generation`, documented in CADS-Tunnel's `docs/agent-onboarding.md`. See
 [Bring your own participant online]({{ '/tutorials/first-participant/' | relative_url }}) for the
 sort-arena-specific walkthrough of that mechanism, live.
+
+## The contract is language-agnostic
+
+Nothing in this protocol is Python. A handler is a program that reads one JSON object from stdin
+and writes one JSON object to stdout, so anything that can do those two things qualifies. The
+shipped scaffold is Python because an interpreter is almost always already there — not because the
+arena cares.
+
+A Java handler, measured against the same checks as the Python baseline on the same array:
+
+```
+rounds=28 comparisons=0 swaps=27 faults=0 sorted=True inversions=27
+property checks passed: adjacent, optimal-swaps
+```
+
+Identical numbers, both property checks passing. And interleaved against the Python baseline, three
+runs each on JDK 25:
+
+| | ms per round |
+|---|---|
+| Java | 38–40 |
+| Python | 47–48 |
+
+**Java is not the slower option** — which is worth stating plainly, because an earlier version of
+this documentation claimed it cost 211 ms per round against Python's 84 ms. That number was real
+but misattributed: the wrapper being measured probed for `java` and `javac` *by executing them* on
+every round, so each round paid for three JVM starts instead of one. Removing the probe drops it
+from 142 ms to 39 ms — measured, same machine, same minute.
+
+The lesson generalises past this table: **what you measure is the whole invocation, not the
+language.** A per-round check that looks free in a script is a process spawn, and process spawns are
+what this contract charges for.
+
+Two things do matter when picking a language:
+
+- **Startup dominates.** The handler is invoked once per round, so interpreter or VM startup is paid
+  every round while the sorting itself is negligible at these array sizes. Anything with a slow cold
+  start will show it here.
+- **Keep the dependency count at zero.** The Java handler above is one file, plain JDK, with a
+  twenty-line extraction of `array` rather than a JSON library. Adding Maven or a package manager
+  buys a build step, and the build step costs more than the parsing did.
