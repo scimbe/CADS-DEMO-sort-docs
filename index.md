@@ -46,7 +46,8 @@ brings up the same bridge locally in about a minute — every tutorial works aga
 ## If you're here to learn the harness, not to sort
 
 Read these five in order. They're the argument, and each one is grounded in measurements from this
-arena rather than assertion — the last one lets you check whether it landed:
+arena rather than assertion. The fourth lets you check whether it landed; the fifth is what
+happens when the measurements behind all of it are wrong:
 
 1. [Five seconds to your first sorter]({{ '/tutorials/five-seconds/' | relative_url }}) — get
    something running, then see the same model produce measurably different participants.
@@ -55,7 +56,7 @@ arena rather than assertion — the last one lets you check whether it landed:
    strengths can show up at all.
 3. [Change the skill, not just the strategy]({{ '/how-to/change-the-skill/' | relative_url }}) —
    edit the driver. The worked example is a real defect where the contract already said the right
-   thing and nothing checked, so it happened in half of all runs anyway.
+   thing and nothing checked, so it happened in 20 of 27 generations anyway.
 4. [Check yourself]({{ '/tutorials/check-yourself/' | relative_url }}) — six predictions, each with
    a command that settles it. One of them catches a claim this site itself got wrong.
 5. [When the measurement lies]({{ '/explanation/when-the-measurement-lies/' | relative_url }}) —
