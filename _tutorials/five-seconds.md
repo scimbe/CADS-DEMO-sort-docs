@@ -177,11 +177,79 @@ The exit code is the referee: 1 on violation, 0 on pass. That's what lets you wi
 hook that runs automatically after every regeneration.
 [Evolve the harness]({{ '/tutorials/evolve-to-bubble-sort/' | relative_url }}) is the full exercise.
 
-## Going live
+## 0:30 — Going live in the hosted arena
 
-The local setup and the hosted arena are independent — nothing here registers you anywhere. When you
-want your sorter reachable at `sort.bunsenbrenner.org`, that's a separate, self-service step: sign
-in, pick an id and a label, run the command the page hands you. See
+Everything so far ran on your machine. Three steps put the same handler on
+`sort.bunsenbrenner.org`, where anyone can race it. **They took 16 seconds measured**, and none of
+them touches your code — the handler you already verified is the one that goes online.
+
+### Step 1 — `join.html` gives you a grant
+
+Open **[sort.bunsenbrenner.org/join.html](https://sort.bunsenbrenner.org/join.html)**. You sign in,
+and your signed-in account *is* the authorisation — there is no waiting room.
+
+The page generates a channel identity **in your browser**: a holder keypair and a noise keypair.
+The private halves never leave it; only the public halves plus a signature are submitted. Fill in a
+participant id and a display label, submit, and the grant comes back on the first status poll.
+
+**Measured: 4.6 s** from submit to a grant in hand.
+
+Two things to get right, because both cost a fresh start if you don't:
+
+- **Copy the whole `.env` block immediately, and finish on this machine.** The grant is delivered
+  once. Your private keys live in this browser's local storage and nowhere else, so re-opening the
+  page elsewhere mints a *different* identity that the grant does not match.
+- **If you lose it, submit again under a new participant id.** Your browser keeps the same identity;
+  only the id and grant are fresh. That is the documented recovery, and it works — it is also the
+  reason a portal route with re-fetchable grants is being built.
+
+### Step 2 — start `ct-agent` and watch it connect
+
+Put the block in a file, add your handler, and run it. `ct-agent` v0.5.0, from
+[the releases page](https://github.com/scimbe/ct-agent/releases/latest):
+
+```bash
+set -a; . ./env.sh; set +a
+export CT_AGENT_SERVICE_HANDLER_CMD="$PWD/handler.sh"
+export CT_CHANNEL_SERVE=1
+ct-agent channel
+```
+
+The first log line is the one that matters:
+
+```
+ct-agent channel: plane-brokered Accept (relay …:4436) — persistent serve: concurrent sessions
+ct-agent channel: direct rung …:4435 succeeded
+ct-agent channel: channel park expired with no partner within the edge park window (#21) -- re-parking
+```
+
+`plane-brokered Accept` means you paired correctly. The re-parking line every 30 seconds is **normal
+idle behaviour**, not a fault — it means you are connected and waiting for the arena to call you.
+
+**Measured: 2 s** from start to `Accept`.
+
+### Step 3 — it is usable on the arena page
+
+Open **[sort.bunsenbrenner.org](https://sort.bunsenbrenner.org/)**. Your label is in the participant
+dropdown; pick it, choose an array length, and hit *Solo run*.
+
+![The hosted arena running a participant called 'intern sorter (adjacent)': finished correctly, comparisons 0, swaps 51, faults 0, rounds 52, and a move log ending in 'done — array is sorted']({{ '/assets/hosted-own-participant.png' | relative_url }})
+
+**Measured: 5 s** for the first answered round. A real run of this handler:
+
+```
+finishedCorrectly  True
+comparisons  0     swaps  74
+faults       0     transportFaults  0
+roundsUsed   75    wallClockMs  6353
+```
+
+`0 + 74 + 1 = 75` — the same round accounting as your local dry run, now over a real Agent-Fabric
+channel. **83 ms per round**, against roughly 50 ms locally; the difference is the network, not your
+handler. `transportFaults` is counted separately from `faults` and never scored against you.
+
+Leave `ct-agent` running for as long as you want to stay live. Full detail, including the portal
+route and what to do when something does not come up, is in
 [Join as a participant]({{ '/how-to/join-as-a-participant/' | relative_url }}).
 
 ## What you now know
