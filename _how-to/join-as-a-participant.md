@@ -266,7 +266,15 @@ verify a participant completely — `handler.sh`, `dryrun.py` and the
 is a hard limit, not an untested claim.
 
 **Copy this block from the join page itself, not from this doc** — every value here is filled in
-live and real, and `CT_CHANNEL_FRONT_DOOR_ONLY=1` is not optional in practice today: the edge runs
+live and real.
+
+About `CT_CHANNEL_FRONT_DOOR_ONLY=1`: the reason below is why this page has recommended it, and it
+remains the safe setting. But it is worth knowing what it does and does not fix. Measured against a
+channel whose edge-side registration was incomplete, setting it changed nothing at all — both with
+and without, `ct-agent` reported `edge broker refused the channel join` on every rung. Read your own
+first log line to tell the two apart: `plane-brokered Accept` means the pairing worked and any
+failure after it is something else; `Accept via relay-gate` is the case this flag exists for. Here
+is that case: the edge runs
 its `:443` front-door pairer and its QUIC/relay pairer as two **separate, disjoint** instances
 (tracked upstream as [CADS-Tunnel#495](https://github.com/scimbe/CADS-Tunnel/issues/495)), and two
 members only ever pair if they park in the *same* one. The bridge that dials you is front-door-only
