@@ -45,7 +45,7 @@ brings up the same bridge locally in about a minute — every tutorial works aga
 
 ## If you're here to learn the harness, not to sort
 
-Read these four in order. They're the argument, and each one is grounded in measurements from this
+Read these five in order. They're the argument, and each one is grounded in measurements from this
 arena rather than assertion — the last one lets you check whether it landed:
 
 1. [Five seconds to your first sorter]({{ '/tutorials/five-seconds/' | relative_url }}) — get
@@ -58,6 +58,9 @@ arena rather than assertion — the last one lets you check whether it landed:
    thing and nothing checked, so it happened in half of all runs anyway.
 4. [Check yourself]({{ '/tutorials/check-yourself/' | relative_url }}) — six predictions, each with
    a command that settles it. One of them catches a claim this site itself got wrong.
+5. [When the measurement lies]({{ '/explanation/when-the-measurement-lies/' | relative_url }}) —
+   five wrong claims published here in one day, and what every one of them had in common. If you
+   build gates on measurements, the measurement is load-bearing too.
 
 ## Sections
 
