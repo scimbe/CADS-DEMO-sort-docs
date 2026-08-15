@@ -44,8 +44,14 @@ python3 dryrun.py participants/mysorter/handler.sh --seed 42 --len 8 --quiet
 
 ```
 SELFTEST OK: mysorter's generated handler emits a valid move for a real round input
-rounds=18 comparisons=0 swaps=17 faults=0 wrongDone=0 sorted=True inversions=17
+start: [81, 14, 3, 94, 35, 31, 28, 17]
+rounds=18 comparisons=0 swaps=17 faults=0 wrongDone=0 sorted=True inversions=17 wallClockMs=857
+final: [3, 14, 17, 28, 31, 35, 81, 94]
 ```
+
+That's the whole output, verbatim — `--quiet` drops the per-round log, not the start and final arrays.
+`swaps=17` equals `inversions=17`, which is the first thing worth noticing: this handler spends
+exactly the minimum an adjacent-swap strategy can spend. Only `wallClockMs` varies between runs.
 
 Now watch it work. Two servers — the bridge answers the API, a static server serves the page:
 
