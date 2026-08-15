@@ -1,6 +1,6 @@
 ---
 title: When the measurement lies
-description: Five wrong claims published on this site in one day, each caused by an unstated assumption in the measuring tool rather than in the system.
+description: Seven wrong claims published on this site in one day, each caused by an unstated assumption in the measuring tool rather than in the system.
 order: 4
 ---
 
@@ -10,7 +10,7 @@ Every other page here argues for checking things: gates, property flags, exit co
 other half, and it is the uncomfortable half. **A check is only as good as the instrument behind it,
 and instruments carry assumptions nobody wrote down.**
 
-The five cases below are not hypothetical. Each was published on this site or reported to the
+The seven cases below are not hypothetical. Each was published on this site or reported to the
 project as fact, and each was wrong. They happened within a single day, to someone actively looking
 for this kind of error. That is the point: knowing about the failure mode does not make you immune
 to it.
@@ -87,6 +87,37 @@ reproduces it exactly: 142 ms with, 39 ms without, same machine, same minute.
 **The assumption:** that the thing being timed was the language. What was actually timed was the
 whole invocation, and a check that looks free in a shell script is a process spawn.
 
+## 6. A pattern narrower than the thing it was matching
+
+**Claimed:** all my test agents were stopped. Reported three separate times over an afternoon.
+
+**Actually:** one had been running the whole time, attempting a channel join roughly six times an
+hour against a dead identity. Someone watching the other end of the connection found it and told me.
+
+The command was `pkill -f "cta/ct-agent"`. It matched the agent at `/tmp/cta/ct-agent` and never
+matched the older one at `/tmp/cads-probe/bin/ct-agent-0417`. The pattern was written for the
+process I was thinking about, then used as though it covered the class.
+
+**The assumption:** that a filter written for one instance generalises to the category. It is the
+same shape as case 3 — a pattern nobody checked for completeness — but failing in the direction of
+*missing* things rather than mangling them.
+
+## 7. A checker that invented its own failures
+
+**Claimed:** after a CSS fix, one page still scrolled sideways on a phone — 542 px in a 390 px
+window.
+
+**Actually:** it did not scroll at all. `window.scrollTo(9999, 0)` moved the page zero pixels.
+
+The script had been flagging any element whose right edge fell outside the viewport. But content
+*inside* a horizontally scrollable container is supposed to do exactly that — that is what the
+container is for. So once the fix worked, the checker kept reporting the very thing that proved it
+had worked. Two more guesses were made at a bug that no longer existed before the definitive test
+— can the page actually be scrolled? — settled it in one line.
+
+**The assumption:** that "extends past the viewport" and "makes the page scroll" are the same
+question. They differ precisely where the fix operates.
+
 ## What they have in common
 
 None of these was a mistake in the system under test. Every one was an unstated assumption inside
@@ -99,6 +130,11 @@ the measurement:
 | 3 | one assignment per line |
 | 4 | the variable in the question drives the mechanism |
 | 5 | the timed thing is the named thing |
+| 6 | a filter written for one instance covers the category |
+| 7 | "extends past the viewport" is the same question as "scrolls" |
+
+Six and seven fail in opposite directions, which is worth noticing: one instrument **missed** real
+cases, the other **invented** them. Both felt equally reliable while wrong.
 
 And they share a tell: **each produced a clean, self-consistent story.** The six fast runs agreed
 with each other. The complexity hypothesis explained the numbers. The table of missing variables was
@@ -107,7 +143,7 @@ which is exactly what makes it convincing.
 
 ## The habits that caught them
 
-Not a checklist to complete, but the four moves that actually did the work here:
+Not a checklist to complete, but the moves that actually did the work here:
 
 - **A control arm, interleaved.** Case 2 was caught this way, and case 5. If two conditions are
   being compared, alternate them; if only one condition exists, invent the other.
@@ -117,6 +153,12 @@ Not a checklist to complete, but the four moves that actually did the work here:
   costs a round, rather than what correlates with failing.
 - **Ask what else changed.** Case 5 turned on noticing that the two handlers differed in their
   wrappers, not just their languages.
+- **Ask the question the fix operates on.** Case 7 survived two more guesses because the check
+  asked "does anything stick out?" instead of "does the page scroll?". One line of the right
+  question ended it.
+- **Let someone outside look.** Case 6 was not caught here at all. Someone watching the other end
+  of the connection saw a process that had been reported stopped three times. No amount of care on
+  this side would have found it, because the instrument and the belief shared the same blind spot.
 
 None of this is about being careful. All five were made while being careful. It is about the
 instrument being part of the system, and therefore something the harness has to check too — which
