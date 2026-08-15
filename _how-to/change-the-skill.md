@@ -52,8 +52,9 @@ silently never fire. A skill that doesn't run is indistinguishable from one that
 
 ## The worked example
 
-Measured across 27 usable generations from two different specifications: **most of them emitted
-`compare` moves that nobody asked for** — 5 of the first 11, then 15 of the next 16. Same model, same specification text, different draw.
+Measured across 27 usable generations from two different specifications: **20 of them emitted
+`compare` moves that nobody asked for** — 5 of the first 11, then 15 of the next 16. Same model,
+same specification text, different draw.
 
 | | Rounds | Comparisons | Swaps |
 |---|---|---|---|
@@ -82,8 +83,8 @@ array. And this isn't an obscure corner: the contract states it outright, in
 
 > `compare` reveals nothing you can't already read from `array` yourself, and still costs a round.
 
-It's stated, it's passed to the model, and it happens anyway in roughly half of runs. **A property
-that lives only in prose is not a property of the system.** That's the transferable lesson, and the
+It's stated, it's passed to the model, and it happened anyway in **20 of 27** generations. **A
+property that lives only in prose is not a property of the system.** That's the transferable lesson, and the
 fix is to move it: prose → gate.
 
 ## First, the cheaper fix: one word
