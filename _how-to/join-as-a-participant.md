@@ -244,11 +244,26 @@ CT_AGENT_SERVICES=text_generation \
   ct-agent channel
 ```
 
-Use **ct-agent v0.4.16 or newer** for this. Older versions carry a rendezvous-ack read bug
-that made the *first* pairing after any fresh start or reconnect stall for 45–100 seconds
-(fixed in v0.4.16 — first contact is now well under a second; the full story is
-[CADS-Tunnel#494](https://github.com/scimbe/CADS-Tunnel/issues/494)). Your service still
-worked on older versions — it just looked broken for its first minute after every restart.
+Use **ct-agent v0.5.0** for this. v0.4.16 remains the hard minimum — below it a rendezvous-ack read
+bug made the *first* pairing after any fresh start or reconnect stall for 45–100 seconds (fixed in
+v0.4.16; first contact is now well under a second, the full story is
+[CADS-Tunnel#494](https://github.com/scimbe/CADS-Tunnel/issues/494)). Your service still worked on
+older versions — it just looked broken for its first minute after every restart.
+
+v0.5.0 is the first release with a binary for every supported platform, and it carries one
+**breaking change** you'll notice if you script against it: `CT_CHANNEL_CALL_SERVICE` now holds a
+single session and multiplexes calls as NDJSON envelopes (`{"ok":true,"output":…}`, one per line)
+until stdin closes. The old one-shot contract — whole stdin is one input, bare output, exit — now
+needs `CT_CHANNEL_CALL_PERSISTENT=0` explicitly. **Serving a handler, which is what this page is
+about, is unaffected**; the change only bites if you *call* a service from a script.
+
+**Platform note, stated plainly because the goal for this project names four:** binaries exist for
+macOS (Intel, Apple Silicon), Linux (x86_64, aarch64, i686) and Windows (x86_64, aarch64, i686).
+**There is no FreeBSD build, in this or any previous release.** A FreeBSD machine can develop and
+verify a participant completely — `handler.sh`, `dryrun.py` and the
+[local arena]({{ '/how-to/run-the-arena-locally/' | relative_url }}) need only `bash`, `python3` and
+`node` — but it cannot currently join the hosted arena, because joining requires this binary. That
+is a hard limit, not an untested claim.
 
 **Copy this block from the join page itself, not from this doc** — every value here is filled in
 live and real, and `CT_CHANNEL_FRONT_DOOR_ONLY=1` is not optional in practice today: the edge runs
@@ -287,7 +302,8 @@ Three things worth knowing if the run doesn't come up cleanly:
   one first if you want the same id back.
 - **Transport faults are near-zero now, and they are not scored against you either way.** Since
   the arena bridge holds **one persistent channel session per participant** (one pairing per run
-  instead of one per round — `ct-agent` v0.4.9's `CT_CHANNEL_CALL_PERSISTENT`), the measured
+  instead of one per round — `CT_CHANNEL_CALL_PERSISTENT`, opt-in from `ct-agent` v0.4.9 and the
+  default since v0.5.0), the measured
   per-round fault rate dropped from 12–15% to 0% over the reference participant's 186-round
   validation, and steady-state rounds run at ~85 ms. Anything transport-side that does still
   happen is tagged `transport: true` in the round event and counted in a separate
@@ -309,13 +325,16 @@ as you want to stay live in the arena.
    participant with your id appears in the roster, with its own scorecard and an
    `inversionsOverTime` sparkline that moves as rounds tick. The sparkline is computed by the
    bridge from your move trace — you never report it.
-2. **Read the *reason* on any fault before assuming your handler is broken.** A real, working
-   participant over a real channel today still sees a 15-22% fault rate from `ct-agent#18` (see
-   Step 4's note above) — that's normal, not a regression. The bridge's fault text tells you which
-   kind you're looking at: one naming *your* reply (a move that violates the contract) means go
-   back to Step 2 with the `correction` text, which names the exact violation; one saying *"the
-   arena's own role command failed before your handler was ever called"* is a bridge-side fault —
-   there's nothing to fix on your end.
+2. **Read the *reason* on any fault before assuming your handler is broken.** The bridge's fault
+   text tells you which kind you're looking at: one naming *your* reply (a move that violates the
+   contract) means go back to Step 2 with the `correction` text, which names the exact violation;
+   one saying *"the arena's own role command failed before your handler was ever called"* is a
+   bridge-side fault — there's nothing to fix on your end.
+
+   An earlier version of this page said a working participant "still sees a 15–22% fault rate from
+   `ct-agent#18`, that's normal". That is no longer true, and leaving it in was worse than saying
+   nothing: it trained readers to accept a broken transport as expected. The measured rate on the
+   reference participant is **0%** — see Step 4.
 
 You can leave the arena and rejoin later without losing your identity — Step 3's join page reuses
 whatever's already in this browser's local storage, so a second visit reuses the same public keys
