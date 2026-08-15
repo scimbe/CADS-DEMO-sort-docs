@@ -31,6 +31,12 @@ running visualization, not a static mockup.
 - [Partition mode]({{ '/tutorials/partition-mode/' | relative_url }}) — a live run where three
   participants finish their segments perfectly and the arena still, correctly, reports the whole
   array unsorted.
+- [Evolve to bubble sort]({{ '/tutorials/evolve-to-bubble-sort/' | relative_url }}) — change the
+  *harness itself*: pin down what "is a bubble sort" means as checkable properties, then iterate a
+  plain-language spec until the generated code provably has them.
+
+Want all of it on your own machine first? [Run the arena locally]({{ '/how-to/run-the-arena-locally/' | relative_url }})
+brings up the same bridge locally in about a minute — every tutorial works against it unchanged.
 
 ## Sections
 

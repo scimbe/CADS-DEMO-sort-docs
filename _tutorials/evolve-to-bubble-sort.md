@@ -146,3 +146,5 @@ the loop (state properties → wire a hook → tighten the spec → verify twice
   exercise: what does this same harness *cost* an algorithm (merge sort) whose natural shape
   fights the contract? Between the two you'll have seen both directions: steering generation
   toward a target, and discovering a target's real cost structure.
+
+Prefer to try all of this without touching the live deployment? [Run the arena locally]({{ '/how-to/run-the-arena-locally/' | relative_url }}) brings up the same bridge on your machine in about a minute — every command in this tutorial works against it unchanged.

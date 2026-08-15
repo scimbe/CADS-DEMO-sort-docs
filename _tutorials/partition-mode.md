@@ -111,3 +111,8 @@ curl -s -N -X POST "https://sort.bunsenbrenner.org/partition?ids=<id-a>,<id-b>,<
 Watch for the same shape: `finishedCorrectly: true` across the board, `wholeArraySorted: false`
 anyway, unless the values happened to already fall into position-ordered ranges — which, for a
 random array, they usually won't.
+
+No live arena needed, either: [Run the arena locally]({{ '/how-to/run-the-arena-locally/' | relative_url }})
+brings up the same bridge on your own machine in about a minute, and the exact `curl` above works
+against `http://127.0.0.1:8789` unchanged — handy when the hosted deployment is down or you just
+don't want to depend on it.

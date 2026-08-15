@@ -181,3 +181,5 @@ closed now — `dryrun.py` is a real, committed file at this repo's root, so a f
 
 Same self-service path as the first tutorial — a public waiting room, no operator file edit. See
 [Join as a participant]({{ '/how-to/join-as-a-participant/' | relative_url }}).
+
+Prefer to try all of this without touching the live deployment? [Run the arena locally]({{ '/how-to/run-the-arena-locally/' | relative_url }}) brings up the same bridge on your machine in about a minute — every command in this tutorial works against it unchanged.
