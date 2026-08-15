@@ -283,15 +283,11 @@ them.)
 means you're in the QUIC pairer and will never pair with this arena's bridge, however long you
 wait. If you see the latter, you're missing `CT_CHANNEL_FRONT_DOOR_ONLY=1` above.
 
-**Do not re-open the claim page on the target machine to copy this.** Your private keys live in
-the local storage of the browser you claimed in, and nowhere else. A different browser — or the same
-one after clearing storage — mints a *fresh* identity and shows it next to the grant that was issued
-for your *original* one, with no warning that the two do not belong together. Copying that block
-gives you a private key and a grant that don't match, and the only symptom is that `ct-agent` never
-pairs, which points at nothing. Measured on the hosted portal, reproduced twice; reported, and this
-warning goes away once the page compares the two.
-
-Move the block as a file, or paste it, from the machine you claimed on.
+**Your private keys live only in the browser you claimed in.** Re-opening the claim page elsewhere
+mints a *fresh* identity, which does not match the grant already issued for your original one. The
+page detects that and blocks the `.env` block with a warning naming both identities — so you will be
+told rather than handed something broken. Move the block as a file, or paste it, from the machine
+you claimed on.
 
 Copy that onto whichever machine actually has `./handler.sh` and `ct-agent` (from
 [the releases page](https://github.com/scimbe/ct-agent/releases/latest), Windows included — a
