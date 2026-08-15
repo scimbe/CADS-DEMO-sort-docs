@@ -301,13 +301,29 @@ until stdin closes. The old one-shot contract — whole stdin is one input, bare
 needs `CT_CHANNEL_CALL_PERSISTENT=0` explicitly. **Serving a handler, which is what this page is
 about, is unaffected**; the change only bites if you *call* a service from a script.
 
-**Platform note, stated plainly because the goal for this project names four:** binaries exist for
-macOS (Intel, Apple Silicon), Linux (x86_64, aarch64, i686) and Windows (x86_64, aarch64, i686).
-**There is no FreeBSD build, in this or any previous release.** A FreeBSD machine can develop and
-verify a participant completely — `handler.sh`, `dryrun.py` and the
-[local arena]({{ '/how-to/run-the-arena-locally/' | relative_url }}) need only `bash`, `python3` and
-`node` — but it cannot currently join the hosted arena, because joining requires this binary. That
-is a hard limit, not an untested claim.
+**Platform note.** Binaries exist for macOS (Intel, Apple Silicon), Linux (x86_64, aarch64, i686)
+and Windows (x86_64, aarch64, i686). **There is no FreeBSD build, in this or any release.**
+
+That limit was measured rather than assumed. On FreeBSD 14.3 (arm64, in a VM) the whole local path
+runs unchanged and produces the same numbers as macOS and Linux:
+
+```
+SELFTEST OK
+rounds=28 comparisons=0 swaps=27 faults=0 sorted=True inversions=27
+property checks passed: adjacent, no-wasted-compares, optimal-swaps
+```
+
+So a FreeBSD machine can develop and verify a participant **completely**, and only the last step —
+joining the hosted arena — is out of reach, because that needs this binary. Verified up to exactly
+the point where one is missing.
+
+Two things cost time on a fresh FreeBSD that cost nothing elsewhere, and neither is obvious:
+
+- **None of the tools are installed.** A base image has `sh` and nothing else — no `bash`, no
+  `python3`, no `git`, no `node`. `pkg install -y bash python3 git` covers the participant path;
+  `node` is in ports too, for the local arena. On macOS and Linux `python3` is almost always
+  already there.
+- **`sudo` does not exist in the base system.** Use `su -m root -c '…'`.
 
 **Copy this block from the join page itself, not from this doc** — every value here is filled in
 live and real.
