@@ -225,6 +225,37 @@ right after you submit:
   your keys caused it, and retrying won't mint the missing pieces. Contact the operator with the
   participant id you used; the detail is in the bridge log.
 
+### The portal claim page — a second way in, measured
+
+There is now a second route to the same thing: the platform's own channel portal, where a grant is
+**deposited server-side and re-fetchable** instead of shown once and gone. It exists because of the
+failure mode described above, and it removes it.
+
+The path is: sign in, open `bunsenbrenner.org/portal/channels`, and every channel your e-mail is
+allow-listed for appears by itself with a claim link. Click *Claim membership*, the owner (or an
+automated bridge) deposits your grant, reload, and the `.env` block is complete.
+
+Walked end to end against the live deployment, cold start with headless Chrome, login included:
+
+| Step | Time |
+|---|---|
+| Claim link → signed in → claim page ready | 3.4 s |
+| *Claim membership* → membership confirmed | 4.1 s |
+| Reload after the grant was deposited → complete `.env` | 4.1 s |
+
+Three things are worth knowing before you use it:
+
+- **`CT_CHANNEL_ROLE` shows a placeholder until the grant is deposited.** It is derived from the
+  grant's direction, and before the deposit there is no direction to derive from — so the first time
+  you see the block it reads `PASTE_INITIATE_OR_ACCEPT`, and after the reload it reads `accept`.
+  Don't copy the block in the waiting state.
+- **Your private keys still live in one browser.** The grant is re-fetchable; the identity is not.
+  Open the page in a different browser and it mints a fresh identity that does not match the
+  deposited grant. The page detects exactly this and blocks the block with a warning naming both
+  identities — but it is still the same rule as above: finish on the machine you claimed on.
+- **The two blocks are not identical.** The portal block and this page's block emit overlapping but
+  differently-shaped sets; take whichever page you actually used, and don't mix them.
+
 ## Step 4 — Serve your handler
 
 Within a second or two of submitting — assuming the normal auto-approved path above, not the
