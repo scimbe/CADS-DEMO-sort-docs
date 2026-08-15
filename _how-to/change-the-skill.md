@@ -108,7 +108,9 @@ Three versions of that same strategy, semantically identical, same model, same t
 things at once: it removed the word *and* added an explicit prohibition. That confounds the result,
 so B was run to separate them: wording changed, no prohibition. Same outcome as C.
 
-**The word alone is the cause. The prohibition adds nothing.** Here is B, in full:
+**Removing the word is enough; the prohibition adds nothing on top of it.** (Whether the word
+itself is what matters, or how it is framed, is settled just below — the short answer is framing.)
+Here is B, in full:
 
 > Scan the array from left to right. Whenever an element is larger than the one directly to its
 > right, swap that pair immediately. Once a full pass produces no swaps, the array is sorted and you

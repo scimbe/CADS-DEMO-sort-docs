@@ -73,7 +73,8 @@ The four layers above make the harness sound like structure — files, scripts, 
 result says it reaches further down than that, into word choice.
 
 Two specifications produced participants that spent half their rounds on `compare` moves buying
-nothing. The cause turned out to be that both specifications used the word *comparing*. Rewriting
+nothing. Both specifications used the word *comparing*, and that turned out to be what the
+generation step keyed on. Rewriting
 one of them with the same meaning and no contract vocabulary — "whenever an element is larger than
 the one directly to its right" — dropped compare moves to zero, without any instruction telling the
 generated code to avoid them.
@@ -91,7 +92,8 @@ is not.
 
 The practical form of this is in
 [Change the skill]({{ '/how-to/change-the-skill/' | relative_url }}), with the three-arm measurement
-that separates the wording effect from an explicit prohibition. The conceptual form belongs here:
+that separates the wording effect from an explicit prohibition — and the later correction showing
+that what actually matters is framing rather than the word itself. The conceptual form belongs here:
 **everything the generation step reads is harness**, including the words you thought were just
 description.
 
