@@ -82,6 +82,13 @@ Nobody wrote a rule connecting the two. The specification said `comparing`, the 
 `compare` move, and the generation step joined them up. That is the harness acting exactly as
 designed, on an input nobody thought of as an input.
 
+**This is not the "prompt wording is powerful" claim this page opened by rejecting** — and the
+difference is the whole point. Nothing here got better because the phrasing was more persuasive. A
+word in one layer collided with a move type in another, and a third layer wired them together. The
+effect is mechanical, reproducible, and visible in the scoreboard; you can predict it from the
+contract without knowing anything about the model. That's a harness property. "Say it more nicely"
+is not.
+
 The practical form of this is in
 [Change the skill]({{ '/how-to/change-the-skill/' | relative_url }}), with the three-arm measurement
 that separates the wording effect from an explicit prohibition. The conceptual form belongs here:
