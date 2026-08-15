@@ -160,14 +160,14 @@ Not a checklist to complete, but the moves that actually did the work here:
   of the connection saw a process that had been reported stopped three times. No amount of care on
   this side would have found it, because the instrument and the belief shared the same blind spot.
 
-None of this is about being careful. All five were made while being careful. It is about the
+None of this is about being careful. All seven were made while being careful. It is about the
 instrument being part of the system, and therefore something the harness has to check too — which
 is the same argument this site makes everywhere else, turned back on the person making it.
 
 ## Why this page exists
 
 Because a training that only shows its successes teaches the wrong thing. If you build gates and
-harnesses on the strength of measurements, the measurement is load-bearing, and a page listing five
+harnesses on the strength of measurements, the measurement is load-bearing, and a page listing seven
 failures in one day is more useful for that than a page implying they don't happen.
 
 Every corrected figure above is now the one this site publishes. The retractions are in the commit
