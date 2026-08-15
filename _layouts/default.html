@@ -49,6 +49,13 @@
  .index-item:hover{border-color:var(--accent)}
  .index-item strong{display:block;font-family:var(--serif);font-size:1.05rem}
  .index-item span{display:block;color:var(--muted);font-size:.85rem;margin-top:.2rem}
+ /* Rouge wraps every pre in div.highlight (and div.language-*). Those wrappers had no width
+    constraint, so the pre's own overflow-x never engaged and long lines pushed the page sideways
+    instead -- 948px of content in a 390px viewport. */
+ .highlight,div[class^="language-"],div[class*=" language-"]{max-width:100%;overflow-x:auto}
+ main.content{min-width:0;max-width:100%}
+ main.content img{max-width:100%;height:auto}
+ table{display:block;overflow-x:auto;max-width:100%}
  @media (max-width:800px){.layout{flex-direction:column}aside.sidebar{width:100%}}
 </style>
 </head><body>
