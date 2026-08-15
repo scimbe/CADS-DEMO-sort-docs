@@ -68,13 +68,13 @@
 <div class="layout">
  <aside class="sidebar">
   <h4>Tutorials</h4>
-  {% for p in site.tutorials %}<a href="{{ p.url | relative_url }}">{{ p.title }}</a>{% endfor %}
+  {% assign nav_tutorials = site.tutorials | sort: "order" %}{% for p in nav_tutorials %}<a href="{{ p.url | relative_url }}">{{ p.title }}</a>{% endfor %}
   <h4>How-to</h4>
-  {% for p in site.how-to %}<a href="{{ p.url | relative_url }}">{{ p.title }}</a>{% endfor %}
+  {% assign nav_how_to = site.how-to | sort: "order" %}{% for p in nav_how_to %}<a href="{{ p.url | relative_url }}">{{ p.title }}</a>{% endfor %}
   <h4>Reference</h4>
-  {% for p in site.reference %}<a href="{{ p.url | relative_url }}">{{ p.title }}</a>{% endfor %}
+  {% assign nav_reference = site.reference | sort: "order" %}{% for p in nav_reference %}<a href="{{ p.url | relative_url }}">{{ p.title }}</a>{% endfor %}
   <h4>Explanation</h4>
-  {% for p in site.explanation %}<a href="{{ p.url | relative_url }}">{{ p.title }}</a>{% endfor %}
+  {% assign nav_explanation = site.explanation | sort: "order" %}{% for p in nav_explanation %}<a href="{{ p.url | relative_url }}">{{ p.title }}</a>{% endfor %}
  </aside>
  <main class="content">
   {% if page.section_label %}<div class="eyebrow">{{ page.section_label }}</div>{% endif %}
