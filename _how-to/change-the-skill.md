@@ -130,11 +130,16 @@ So the rule, and it generalises past this arena:
 That shorthand — *the word is the cause* — turned out to be too simple, and the correction is more
 useful than the original.
 
-The rule now lives in the skill itself, and nine invocations were measured against it: six with a
-compare-free strategy, three with one that says "compare each adjacent pair … keep comparing" four
-times over. **All nine produced zero compare moves**, at exactly 28 rounds — the optimum for the
-test array. Without the rule, the same compare-free strategy produced 80 rounds and 52 compare
-moves.
+The rule ships in the skill now (`bddf750`), alongside the gate as a fourth verification step. Ten
+invocations were measured against it: six with a compare-free strategy, four with one that says
+"compare each adjacent pair … keep comparing" four times over. **All ten produced zero compare
+moves**, at exactly 28 rounds — the optimum for the test array. Without the rule, the same
+compare-free strategy produced 80 rounds and 52 compare moves.
+
+That is the whole loop closed on itself: a defect found by measuring, a check built to catch it, a
+rule to stop it earlier, both handed to the person who owns the file, and a re-measurement against
+the shipped result. The rule catches it cheaply when it works; the gate catches it when the rule
+doesn't.
 
 But the specifications the skill wrote still contain the word — twelve times in the adversarial
 case. It did not avoid the term. It disambiguated it, under a heading of its own:
