@@ -43,6 +43,20 @@ shows you why the harness, not the model, is what actually differs. Everything b
 Want all of it on your own machine first? [Run the arena locally]({{ '/how-to/run-the-arena-locally/' | relative_url }})
 brings up the same bridge locally in about a minute — every tutorial works against it unchanged.
 
+## If you're here to learn the harness, not to sort
+
+Read these three in order. They're the argument, and each one is grounded in measurements from this
+arena rather than assertion:
+
+1. [Five seconds to your first sorter]({{ '/tutorials/five-seconds/' | relative_url }}) — get
+   something running, then see the same model produce measurably different participants.
+2. [The harness is the variable]({{ '/explanation/the-harness-is-the-variable/' | relative_url }}) —
+   the four layers a participant can differ in, and why the contract decides which of an algorithm's
+   strengths can show up at all.
+3. [Change the skill, not just the strategy]({{ '/how-to/change-the-skill/' | relative_url }}) —
+   edit the driver. The worked example is a real defect where the contract already said the right
+   thing and nothing checked, so it happened in half of all runs anyway.
+
 ## Sections
 
 - **[Tutorials]({{ '/tutorials/' | relative_url }})** — learn by doing, start to finish.
