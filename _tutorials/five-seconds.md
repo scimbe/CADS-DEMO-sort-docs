@@ -91,8 +91,22 @@ python3 dryrun.py participants/mysorter/handler.sh --seed 42 --len 8 --quiet
 python3 dryrun.py participants/mysorter/handler.sh --correction-check
 ```
 
-Generation takes about 30 seconds. If it fails, you still have a working participant — the baseline
-you copied at 0:01 is untouched until a new handler passes its syntax check.
+**How long this takes, measured rather than promised:** across 11 generations the median was
+**127 seconds**, with a spread from 38 s to 409 s. Two specifications of quite different complexity
+were interleaved and came out the same (156 s vs 161 s back to back), so the spread is latency, not
+your wording — a fast run is luck, not a faster prompt. Budget a few minutes and don't conclude
+anything from one slow run.
+
+**Before you run it, protect what already works.** A failed generation currently *removes*
+`generated/handler.py` instead of leaving the previous one in place, so a bad draw can take your
+working participant with it:
+
+```bash
+cp participants/mysorter/generated/handler.py participants/mysorter/generated/handler.py.bak
+```
+
+This is a real defect, not a habit worth teaching — it's reported with a tested fix, and this
+paragraph disappears from the page once that lands.
 
 **Five things worth knowing before you hit them:**
 
@@ -162,8 +176,12 @@ in, pick an id and a label, run the command the page hands you. See
 | Step | Time | Depends on |
 |---|---|---|
 | Clone to running participant | 5 s | nothing — deterministic |
-| Generating your own strategy | ~31 s | one model call |
+| Generating your own strategy | 38–409 s, median 127 s | one model call |
 | Forcing and proving a property | 1 spec line | you |
+
+The first row is the one that matters, and it's the reason the scaffold ships a working handler: the
+part you can rely on is deterministic, and the part that varies by a factor of ten only ever upgrades
+something that already runs.
 
 The model is the constant. The harness is the variable, and a skill is the tool you touch it with:
 it writes the spec, generates code from it, and checks the result against criteria you fixed in
@@ -173,5 +191,6 @@ interesting.
 
 ---
 
-*Measured on a fresh clone: clone 1 s, scaffold <1 s, first success 5 s, generation 31 s mean over
-six runs (18–46 s). Screenshots are from a locally running arena.*
+*Measured on a fresh clone: clone 1 s, scaffold <1 s, first success 5 s (fastest observed 2 s).
+Generation: 11 runs, median 127 s, range 38–409 s, 11/11 produced a contract-passing handler.
+Screenshots are from a locally running arena.*
