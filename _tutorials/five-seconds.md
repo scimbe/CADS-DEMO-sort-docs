@@ -102,8 +102,9 @@ python3 "$REPO/dryrun.py" ./handler.sh --seed 42 --len 8 --quiet
 python3 "$REPO/dryrun.py" ./handler.sh --correction-check
 ```
 
-**How long this takes, measured rather than promised:** across **28 generations** the median was
-**130 seconds**, with a spread from 25 s to 472 s. Two runs out of 28 took longer than five minutes.
+**How long this takes, measured rather than promised:** across **29 attempts, 28 of which produced
+a usable handler**, the median was **130 seconds**, with a spread from 25 s to 472 s. Two of the 28
+took longer than five minutes.
 Two specifications of quite different complexity were interleaved and came out the same (156 s vs
 161 s back to back), so the spread is latency, not your wording — a fast run is luck, not a faster
 prompt. Budget a few minutes and don't conclude anything from one slow run.
@@ -209,6 +210,6 @@ interesting.
 ---
 
 *Measured on fresh clones: clone plus scaffold 1–2 s to a contract-passing baseline. Generation:
-28 runs, median 130 s, range 25–472 s, 27 of 28 produced a usable handler on the first or second
-attempt. Full path to answering rounds in the hosted arena: 43 s in one continuous run. Screenshots
+29 attempts, 28 usable, median 130 s, range 25–472 s — the one failure produced prose instead of
+code and was caught by the compile check. Full path to answering rounds in the hosted arena: 43 s in one continuous run. Screenshots
 are from a locally running arena and from the hosted one.*

@@ -92,7 +92,7 @@ the exact kind of array that caused the original fault:
 participant directory in the clone holds `AGENTS.md` and the scripts but no `generated/handler.py`
 — that artifact is built, not committed, so a fresh clone cannot run these arrays until you run
 `generate.sh`. And when you do, expect the *faults* to match and the *round counts* not necessarily
-to: measured across 27 generations from unchanged specifications, the same spec text produced
+to: measured across 27 generations whose move mix was recorded, the same spec text produced
 handlers that differ by a factor of 2.5 in rounds
 ([Change the skill]({{ '/how-to/change-the-skill/' | relative_url }}) has the measurement). Exact
 round counts for generated code are a property of one draw; `faults=0` and `sorted=True` are the
