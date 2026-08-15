@@ -63,6 +63,19 @@ moves that nobody asked for.** Same model, same specification text, different dr
 Identical swap counts — identical *work* — and a factor of 2.5 in the number the arena ranks by.
 The round accounting is exact: `rounds = comparisons + swaps + 1`.
 
+You can see the same thing in the live arena, on a participant that has been running there since
+long before this was measured:
+
+![The hosted arena after a completed bubble-sort run: the scorecard reads comparisons 29, swaps 31, rounds 61, faults 0, and the move log shows consecutive compare moves]({{ '/assets/sort-arena-live-04-bubble-sort-complete.png' | relative_url }})
+
+`29 + 31 + 1 = 61`. The move log makes it concrete — rounds 51 through 59 are nine consecutive
+`compare` moves, and none of them changed the array. Nearly half this participant's rounds went on
+reading values that were already in front of it.
+
+Note what the arena does *not* do about that: the run is marked **finished correctly**, faults 0.
+Nothing here is broken. It's a participant paying twice for a result it could have had for half,
+and no check anywhere says so. That's the gap a gate fills.
+
 A `compare` move buys nothing here, because the round input already hands the handler the entire
 array. And this isn't an obscure corner: the contract states it outright, in
 `participants/CLAUDE.md`, in the text that is passed to the model at generation time:
