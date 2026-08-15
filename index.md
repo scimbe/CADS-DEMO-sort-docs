@@ -16,6 +16,11 @@ running visualization, not a static mockup.
 
 ## Start here
 
+**New here? [Five seconds to your first sorter]({{ '/tutorials/five-seconds/' | relative_url }}).**
+Clone, copy four commands, and a contract-verified participant is sorting — before any model call,
+so nothing can fail on you. Then one spec sentence makes it your own strategy, and the same page
+shows you why the harness, not the model, is what actually differs. Everything below goes deeper.
+
 - [Bring your own participant online]({{ '/tutorials/first-participant/' | relative_url }}) — the
   `sort-arena-harness` skill loop, literal commands included: describe a strategy in plain
   language, get real generated code back, verify it before it goes live.

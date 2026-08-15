@@ -9,7 +9,8 @@ permalink: /reference/
 Precise, exhaustive facts — the move contract's exact fields, bounds, and scoring rules.
 
 <div class="index-list">
-{% for p in site.reference %}
+{% assign ordered = site.reference | sort: "order" %}
+{% for p in ordered %}
   <a class="index-item" href="{{ p.url | relative_url }}">
     <strong>{{ p.title }}</strong>
     {% if p.description %}<span>{{ p.description }}</span>{% endif %}

@@ -9,7 +9,8 @@ permalink: /how-to/
 Goal-oriented steps for a specific task, assuming you already know the basics.
 
 <div class="index-list">
-{% for p in site.how-to %}
+{% assign ordered = site.how-to | sort: "order" %}
+{% for p in ordered %}
   <a class="index-item" href="{{ p.url | relative_url }}">
     <strong>{{ p.title }}</strong>
     {% if p.description %}<span>{{ p.description }}</span>{% endif %}
