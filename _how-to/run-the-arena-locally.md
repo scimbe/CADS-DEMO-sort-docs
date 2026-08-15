@@ -83,6 +83,21 @@ insertion-fan, n=12
   (32 inversions, 32 swaps — the adjacent-swap bound, live)
 ```
 
+This is what a finished run looks like — everything below is local, on `127.0.0.1`, with no account
+and no tunnel:
+
+![The local arena after a completed solo run: sorted bars, a scorecard reading comparisons 0, swaps 28, faults 0, rounds 29, the inversions sparkline falling to zero, and the move log ending in 'done — array is sorted']({{ '/assets/local-arena-solo-run.png' | relative_url }})
+
+Three things in that picture are worth naming, because they are what the tutorials keep asserting:
+
+- **`comparisons 0 · swaps 28 · rounds 29`.** That is `0 + 28 + 1`, and it holds for every run:
+  every move costs exactly one round, plus one for the final `done`. Rounds are not a mystery
+  number — they are your move count.
+- **`swaps 28` against `inversions 28`** at the top left. The adjacent-swap bound, visible rather
+  than argued.
+- **The move log is the bridge's own stream**, not a replay the page invented. `r 29 done — array
+  is sorted` is the same event the scorecard was computed from.
+
 Watching `inversionsOverTime` tick down while the round timeline fills in compare/swap/fault/done
 colors makes whatever your tutorial's numbers claimed land in a way `rounds=` alone doesn't. This
 is also exactly what [Bring your own participant online]({{ '/tutorials/first-participant/' | relative_url }})
