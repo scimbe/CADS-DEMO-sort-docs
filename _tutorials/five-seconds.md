@@ -27,19 +27,26 @@ The scaffold ships a working, contract-verified sorter. You copy it, and you hav
 **before any model has been asked anything**.
 
 ```bash
-mkdir -p participants/mysorter/generated
-cp templates/generated-python/{generate.sh,handler.sh,reference-handler.py} participants/mysorter/
-cp participants/mysorter/reference-handler.py participants/mysorter/generated/handler.py
-chmod +x participants/mysorter/*.sh
+REPO="$(git rev-parse --show-toplevel)"
+mkdir -p ../mysorter/generated && cd ../mysorter
+cp "$REPO"/templates/generated-python/{generate.sh,handler.sh,reference-handler.py} .
+cp reference-handler.py generated/handler.py
+export SORT_PROTOCOL_MD="$REPO/participants/CLAUDE.md"
 ```
+
+Your participant lives in **its own directory, beside the clone — not inside it.** Only two things
+ever come from the repo: the move contract (`SORT_PROTOCOL_MD`) and `dryrun.py`. Your work stays
+yours, and `git status` in the clone stays empty.
+
+No `chmod` is needed — `cp` carries the executable bit over.
 
 ## 0:05 — It runs
 
 Two checks, then it's live in the arena on your own machine.
 
 ```bash
-./participants/mysorter/handler.sh --selftest
-python3 dryrun.py participants/mysorter/handler.sh --seed 42 --len 8 --quiet
+./handler.sh --selftest
+python3 "$REPO/dryrun.py" ./handler.sh --seed 42 --len 8 --quiet
 ```
 
 ```
@@ -56,10 +63,14 @@ exactly the minimum an adjacent-swap strategy can spend. Only `wallClockMs` vari
 Now watch it work. Two servers — the bridge answers the API, a static server serves the page:
 
 ```bash
-export SORT_PARTICIPANTS_JSON='[{"you":"mysorter","label":"My sorter","cmd":"./participants/mysorter/handler.sh"}]'
+cd "$REPO"
+export SORT_PARTICIPANTS_JSON='[{"you":"mysorter","label":"My sorter","cmd":"../mysorter/handler.sh"}]'
 node bridge/server.js &
 python3 -m http.server 8000 &
 ```
+
+Both servers run from the clone, which is why the `cd` is there; `cmd` is resolved relative to it,
+so `../mysorter/handler.sh` points back at your directory. Return with `cd ../mysorter` afterwards.
 
 Then open **`http://127.0.0.1:8000/index.html?bridge=http://127.0.0.1:8789`** and hit *Solo run*.
 
@@ -72,7 +83,7 @@ different origins. Without it the page assumes same-origin. Full detail in
 ## 0:10 — Now make it yours
 
 Nothing above involved a model. That changes now. Describe your strategy in your own words — no
-algorithm name required — in `participants/mysorter/AGENTS.md`:
+algorithm name required — in `AGENTS.md`, next to the scripts you just copied:
 
 ```markdown
 # mysorter
@@ -85,10 +96,10 @@ order, swap it immediately; once a full pass produces no swaps, it is sorted.
 Then generate and verify:
 
 ```bash
-./participants/mysorter/generate.sh
-./participants/mysorter/handler.sh --selftest
-python3 dryrun.py participants/mysorter/handler.sh --seed 42 --len 8 --quiet
-python3 dryrun.py participants/mysorter/handler.sh --correction-check
+./generate.sh
+./handler.sh --selftest
+python3 "$REPO/dryrun.py" ./handler.sh --seed 42 --len 8 --quiet
+python3 "$REPO/dryrun.py" ./handler.sh --correction-check
 ```
 
 **How long this takes, measured rather than promised:** across 11 generations the median was
@@ -97,16 +108,10 @@ were interleaved and came out the same (156 s vs 161 s back to back), so the spr
 your wording — a fast run is luck, not a faster prompt. Budget a few minutes and don't conclude
 anything from one slow run.
 
-**Before you run it, protect what already works.** A failed generation currently *removes*
-`generated/handler.py` instead of leaving the previous one in place, so a bad draw can take your
-working participant with it:
-
-```bash
-cp participants/mysorter/generated/handler.py participants/mysorter/generated/handler.py.bak
-```
-
-This is a real defect, not a habit worth teaching — it's reported with a tested fix, and this
-paragraph disappears from the page once that lands.
+**A failed generation cannot cost you anything.** The draft is written to a staging file and only
+moved into place once it compiles, so a bad draw leaves your previous handler exactly where it was —
+`generate.sh` says so explicitly when it gives up. (This page briefly told you to keep a backup
+first. That was correct at the time and isn't any more.)
 
 **Five things worth knowing before you hit them:**
 
@@ -150,7 +155,7 @@ So far "it sorts" was the goal. The sharper version: a harness that guarantees a
 and proves it mechanically. Two checks separate "this is bubble sort" from "this sorts somehow":
 
 ```bash
-python3 dryrun.py participants/mysorter/handler.sh --seed 42 --quiet \
+python3 "$REPO/dryrun.py" ./handler.sh --seed 42 --quiet \
   --require-adjacent --require-optimal-swaps
 ```
 
