@@ -34,7 +34,7 @@ in fact, a *non*-bubble strategy makes the exercise more instructive).
 `dryrun.py` checks both natively. This is your **goal line**:
 
 ```bash
-python3 dryrun.py participants/<your-id>/handler.sh --seed 42 --quiet \
+python3 "$REPO/dryrun.py" ./handler.sh --seed 42 --quiet \
   --require-adjacent --require-optimal-swaps
 ```
 
@@ -62,18 +62,26 @@ property. Two ways, pick one:
 **A `verify.sh` next to your handler** (works with every agent CLI):
 
 ```bash
-cat > participants/<your-id>/verify.sh <<'SH'
+cat > verify.sh <<'SH'
 #!/usr/bin/env bash
-set -e
-cd "$(dirname "$0")/../.."
+set -euo pipefail
+cd "$(dirname "$0")"
+: "${SORT_PROTOCOL_MD:?set SORT_PROTOCOL_MD to <your-clone>/participants/CLAUDE.md}"
+DRYRUN="$(cd "$(dirname "$SORT_PROTOCOL_MD")/.." && pwd)/dryrun.py"
 for seed in 42 7; do
-  python3 dryrun.py "participants/$(basename "$(dirname "$0")")/handler.sh" \
-    --seed "$seed" --quiet --require-adjacent --require-optimal-swaps
+  python3 "$DRYRUN" ./handler.sh --seed "$seed" --quiet \
+    --require-adjacent --require-optimal-swaps
 done
 echo "VERIFIED: bubble-sort properties hold on both seeds"
 SH
-chmod +x participants/<your-id>/verify.sh
+chmod +x verify.sh
 ```
+
+It finds `dryrun.py` through `SORT_PROTOCOL_MD`, which you already export to scaffold a participant
+— so the script needs no path of its own and works from a directory outside the clone. Verified in
+all three states: a conforming handler exits 0 with `property checks passed` twice, a non-adjacent
+one exits 1 naming the round and the rule, and a forgotten export exits 1 saying which variable to
+set rather than failing somewhere further down.
 
 **Or a Claude Code hook**, so the check fires automatically after every regeneration — add to
 `.claude/settings.json` in your clone:
@@ -83,7 +91,7 @@ chmod +x participants/<your-id>/verify.sh
   "hooks": {
     "PostToolUse": [{
       "matcher": "Bash(*generate.sh*)",
-      "hooks": [{ "type": "command", "command": "participants/<your-id>/verify.sh" }]
+      "hooks": [{ "type": "command", "command": "$CLAUDE_PROJECT_DIR/verify.sh" }]
     }]
   }
 }
