@@ -56,6 +56,8 @@ arena rather than assertion:
 3. [Change the skill, not just the strategy]({{ '/how-to/change-the-skill/' | relative_url }}) —
    edit the driver. The worked example is a real defect where the contract already said the right
    thing and nothing checked, so it happened in half of all runs anyway.
+4. [Check yourself]({{ '/tutorials/check-yourself/' | relative_url }}) — six predictions, each with
+   a command that settles it. One of them catches a claim this site itself got wrong.
 
 ## Sections
 
