@@ -40,6 +40,33 @@ yours, and `git status` in the clone stays empty.
 
 No `chmod` is needed — `cp` carries the executable bit over.
 
+### Where you are, and how to get back
+
+Two directories now matter, and every command below assumes you are in the second one:
+
+```
+CADS-DEMO-sort/     the clone — you only ever read from it
+mysorter/           your participant — everything you run lives here
+```
+
+`REPO` and `SORT_PROTOCOL_MD` are shell variables. **They vanish when you close the terminal**, and
+nothing reminds you. Opening a new one, or coming back tomorrow, start with this:
+
+```bash
+cd /path/to/mysorter                                   # your participant directory
+export REPO="$(cd ../CADS-DEMO-sort && pwd)"           # adjust if your clone sits elsewhere
+export SORT_PROTOCOL_MD="$REPO/participants/CLAUDE.md"
+```
+
+A quick check that you are in the right place with the right variables set:
+
+```bash
+ls handler.sh generate.sh AGENTS.md && echo "$REPO" && ls "$SORT_PROTOCOL_MD"
+```
+
+If any of those complain, you are in the wrong directory or the variables are gone. Everything in
+this tutorial fails in confusing ways from the wrong directory, so it is worth the three seconds.
+
 ## 0:05 — It runs
 
 Two checks, then it's live in the arena on your own machine.
@@ -93,9 +120,36 @@ Scan the array left to right comparing each adjacent pair; if a pair is out of
 order, swap it immediately; once a full pass produces no swaps, it is sorted.
 ```
 
+### What actually generates the code
+
+`generate.sh` does not contain a model. It **shells out to a coding-agent CLI that you have
+installed and signed in**, hands it the move contract plus your `AGENTS.md`, and writes whatever
+comes back to `generated/handler.py`.
+
+```bash
+LLM="${CT_LLM_CMD:-claude}"        # this is the line in generate.sh that picks the tool
+```
+
+So before running it you need **one** of these on your PATH and authenticated:
+
+| CLI | Use it by |
+|---|---|
+| **Claude Code** (`claude`) | the default — nothing to set |
+| **opencode** | `export CT_LLM_CMD=opencode` |
+| **Codex** (`codex`) | `export CT_LLM_CMD=codex` |
+| **Gemini** (`gemini`) | `export CT_LLM_CMD=gemini` |
+
+The code is generated **wherever that CLI sends its request** — for the cloud CLIs, on the vendor's
+servers; your machine only receives the text and writes the file. Nothing about the arena runs a
+model: the contract is spoken by the generated Python, and that runs locally.
+
+If you have no CLI installed, everything up to here still worked — you already have a sorting
+participant. You just can't replace it with your own strategy yet.
+
 Then generate and verify:
 
 ```bash
+# you are in mysorter/, with REPO and SORT_PROTOCOL_MD set — see "Where you are" above
 ./generate.sh
 ./handler.sh --selftest
 python3 "$REPO/dryrun.py" ./handler.sh --seed 42 --len 8 --quiet
