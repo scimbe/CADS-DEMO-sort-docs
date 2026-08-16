@@ -347,10 +347,11 @@ on FreeBSD and willing to compile, you are not blocked — you are just doing th
 job yourself. Tracked as [ct-agent#27](https://github.com/scimbe/ct-agent/issues/27).
 
 Two honest limits on that result. It was built and run on **arm64** FreeBSD; `x86_64` is untested.
-And `cargo test` there is **not** clean — 302 pass, 5 fail, all in the framed-relay keepalive path
-(four of them reproducibly, one only under load). That branch is not the one a Sort Arena
-participant uses, which is why the run above is faultless, but if you compile it yourself you will
-see those failures and should know they are expected rather than something you caused.
+And `cargo test` there is **not** clean — 302 pass, 5 fail, all in the framed-relay keepalive path.
+Do not read that as a FreeBSD defect: the same tests also fail on macOS when invoked differently
+(three of four individually, one of four in a batch), so they depend on what ran before them rather
+than on the platform. That branch is not the one a Sort Arena participant uses, which is why the run
+above is faultless. Mentioned only so the failures don't look like something you caused.
 
 Two things cost time on a fresh FreeBSD that cost nothing elsewhere, and neither is obvious:
 
