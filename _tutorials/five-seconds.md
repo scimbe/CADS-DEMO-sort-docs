@@ -237,10 +237,24 @@ Everything so far ran on your machine. Three steps put the same handler on
 `sort.bunsenbrenner.org`, where anyone can race it. **They took 16 seconds measured**, and none of
 them touches your code — the handler you already verified is the one that goes online.
 
+### Step 0 — you need an account, and you can make one yourself
+
+`join.html` sits behind the deployment's sign-in, so before anything else you need a login. There is
+no invitation step: the realm has **open self-registration**.
+
+1. Open [sort.bunsenbrenner.org/join.html](https://sort.bunsenbrenner.org/join.html). You are
+   redirected to the sign-in page.
+2. Click **Register** at the bottom (*"New user? Register"*).
+3. Fill in e-mail, password, first and last name, and accept the terms.
+4. You are signed in immediately — **no confirmation mail is sent, and none is needed.**
+
+That last point is worth knowing rather than discovering: the account works the moment you submit.
+Verified by creating one today.
+
 ### Step 1 — `join.html` gives you a grant
 
-Open **[sort.bunsenbrenner.org/join.html](https://sort.bunsenbrenner.org/join.html)**. You sign in,
-and your signed-in account *is* the authorisation — there is no waiting room.
+Back on **[join.html](https://sort.bunsenbrenner.org/join.html)**, your signed-in account *is* the
+authorisation — there is no waiting room.
 
 The page generates a channel identity **in your browser**: a holder keypair and a noise keypair.
 The private halves never leave it; only the public halves plus a signature are submitted. Fill in a
@@ -257,17 +271,44 @@ Two things to get right, because both cost a fresh start if you don't:
   only the id and grant are fresh. That is the documented recovery, and it works — it is also the
   reason a portal route with re-fetchable grants is being built.
 
-### Step 2 — start `ct-agent` and watch it connect
+### Step 2 — get the binary, wire it to your handler, start it
 
-Put the block in a file, add your handler, and run it. `ct-agent` v0.5.0, from
-[the releases page](https://github.com/scimbe/ct-agent/releases/latest):
+**Download `ct-agent`.** The [releases page](https://github.com/scimbe/ct-agent/releases/latest)
+ships one file per platform — no installer, no build step. Pick by OS and architecture:
+
+| Your machine | Asset |
+|---|---|
+| macOS, Apple Silicon | `ct-agent-darwin-aarch64` |
+| macOS, Intel | `ct-agent-darwin-x86_64` |
+| Linux, 64-bit | `ct-agent-linux-x86_64` (or `-aarch64`) |
+| Windows | `ct-agent-windows-x86_64.exe` |
 
 ```bash
-set -a; . ./env.sh; set +a
+# example: macOS on Apple Silicon
+curl -L -o ct-agent https://github.com/scimbe/ct-agent/releases/latest/download/ct-agent-darwin-aarch64
+chmod +x ct-agent
+./ct-agent --version        # expect 0.5.3 or newer
+```
+
+There is **no FreeBSD asset**; see [Join as a participant]({{ '/how-to/join-as-a-participant/' | relative_url }})
+for what to do there.
+
+**Wire it to your handler.** Paste the `.env` block from the join page into `env.sh` next to your
+handler, then:
+
+```bash
+cd /path/to/mysorter            # your participant directory again
+chmod 600 env.sh                # it contains your private keys
+set -a; . ./env.sh; set +a      # load every CT_* variable into this shell
 export CT_AGENT_SERVICE_HANDLER_CMD="$PWD/handler.sh"
 export CT_CHANNEL_SERVE=1
-ct-agent channel
+./ct-agent channel
 ```
+
+That middle line is the whole link between the tunnel and your sorter:
+`CT_AGENT_SERVICE_HANDLER_CMD` tells `ct-agent` **which program to hand each round input to**. The
+arena calls the tunnel, the tunnel calls your `handler.sh`, and your handler's one line of JSON goes
+back the same way. Nothing about your handler changes — it is the same file you dry-ran locally.
 
 The first log line is the one that matters:
 
