@@ -25,6 +25,13 @@ automatically**; no operator step, no CLI needed until the very last step.
   execute a `.sh` file directly (no shebang support), so `dryrun.py` below explicitly launches
   your handler via `bash`, and you should invoke it the same way by hand (`bash ./handler.sh`,
   not `./handler.sh`, if double-clicking or a bare path doesn't work for you).
+
+  `dryrun.py` looks for **Git Bash specifically** on Windows rather than trusting a bare `bash`.
+  That matters more than it sounds: `C:\Windows\System32\bash.exe` exists on a default install
+  as the WSL launcher, and with no WSL distro present it prints "Windows Subsystem for Linux has
+  no installed distributions" and exits 1 — faulting every round while `--selftest` still passes,
+  because the selftest runs under your own Git Bash and never goes through Python's lookup. This
+  was found by the platform CI matrix on its first Windows run, not by a person.
 - **On FreeBSD, install the tools first.** A base system has `sh` and nothing else — no `bash`, no
   `python3`, no `git`. `pkg install -y bash python3 git` covers everything up to Step 3, and `node`
   is in ports if you also want the [local arena]({{ '/how-to/run-the-arena-locally/' | relative_url }}).
