@@ -61,11 +61,14 @@ export SORT_PROTOCOL_MD="$REPO/participants/CLAUDE.md"
 A quick check that you are in the right place with the right variables set:
 
 ```bash
-ls handler.sh generate.sh AGENTS.md && echo "$REPO" && ls "$SORT_PROTOCOL_MD"
+ls handler.sh generate.sh && ls "$SORT_PROTOCOL_MD" && echo "REPO=$REPO"
 ```
 
-If any of those complain, you are in the wrong directory or the variables are gone. Everything in
-this tutorial fails in confusing ways from the wrong directory, so it is worth the three seconds.
+All three have to answer. If `ls handler.sh` fails you are in the wrong directory; if the contract
+path fails, `REPO` points somewhere else than your clone. (`AGENTS.md` is deliberately not in that
+check — you only write it further down, and a reader re-entering before then would be alarmed by
+its absence.) Everything in this tutorial fails in confusing ways from the wrong directory, so it is
+worth the three seconds.
 
 ## 0:05 — It runs
 
