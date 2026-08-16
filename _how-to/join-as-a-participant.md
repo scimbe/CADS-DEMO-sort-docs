@@ -301,7 +301,7 @@ Those errors are good ones — they name the variable and the alternative, so on
 one retry, not an investigation. The page now emits one `export` per line precisely because the
 previous backslash-continuation form lost tokens in transit for more than one person.
 
-Use **ct-agent v0.5.0** for this. v0.4.16 remains the hard minimum — below it a rendezvous-ack read
+Use **ct-agent v0.5.3 or newer** for this. v0.4.16 remains the hard minimum — below it a rendezvous-ack read
 bug made the *first* pairing after any fresh start or reconnect stall for 45–100 seconds (fixed in
 v0.4.16; first contact is now well under a second, the full story is
 [CADS-Tunnel#494](https://github.com/scimbe/CADS-Tunnel/issues/494)). Your service still worked on
@@ -381,6 +381,29 @@ being unreachable from outside — that was a bad measurement, a TCP probe again
 UDP port, retracted on CADS-DEMO-sort#22. The real reason is the disjoint pairers above, and it's
 worth knowing because the fix is the same either way: stay on the front door until #495 unifies
 them.)
+
+**If the edge refuses you, read the category in the message.** Since 2026-08-16 a refusal names why,
+and it is the difference between an hour of guessing and a one-line diagnosis:
+
+| Category | What it means |
+|---|---|
+| `possession` | The grant verified, but you can't prove you hold its identity — your keys don't match the grant. Almost always: you claimed in one browser and are serving with keys from another. |
+| `not-member` | The channel doesn't know this holder at all. |
+| `grant-verify` | The grant itself didn't check out against the operator key. |
+| `malformed` · `endpoint` · `len-oob` · `pairing` | Shape and transport problems, not identity ones. |
+
+```
+ct-agent channel: edge broker refused the channel join [possession]
+```
+
+Verified by deliberately serving a real grant with freshly minted keys. **You need v0.5.2 or newer
+to see the category** — an older binary prints the same message without the bracket, which is not a
+failure, just the old client path.
+
+And on checking your version: `--version` reported `0.5.0` for the v0.5.0, v0.5.1 and v0.5.2
+releases alike — the crate version had not been bumped, so it could not tell you which build you
+had. Fixed in v0.5.3, which reports `0.5.3`. For anything older, the download's checksum is the only
+way to know what you have.
 
 **How to tell which pairer you actually landed in**, from your own process's first log line:
 `plane-brokered Accept` means you're correctly in the front-door pairer; `Accept via relay-gate`
