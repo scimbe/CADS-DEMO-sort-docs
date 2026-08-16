@@ -1,6 +1,6 @@
 ---
 title: Run it against your own model
-description: The whole harness pointed at a self-hosted LLM instead of a vendor API — the hardest version of this exercise, and the one that proves the argument.
+description: The whole harness pointed at a self-hosted LLM instead of a vendor API — the hardest version of this exercise. First real attempt: three of five models down, the fourth blocked by the generation wrapper, not the spec.
 order: 4
 ---
 
@@ -38,9 +38,17 @@ With those set, `./generate.sh` runs unchanged and the model that writes your so
 
 ## A worked target
 
-[CADS-DEMO-local-llm](https://github.com/scimbe/CADS-DEMO-local-llm) is such an endpoint: a
-`qwen3-coder:30b` served by Ollama on a single 24 GB GPU, exposed through a real CADS-Tunnel agent,
-fronted by LiteLLM for an OpenAI- and Anthropic-compatible surface with per-person keys.
+[CADS-DEMO-local-llm](https://github.com/scimbe/CADS-DEMO-local-llm) is such an endpoint: several
+models served by Ollama on a single GPU, exposed through a real CADS-Tunnel agent, fronted by
+LiteLLM for an OpenAI- and Anthropic-compatible surface with per-person keys.
+
+**Correction.** This page previously named the model as `qwen3-coder:30b` / `local-qwen3-coder`.
+That was never checked against the live endpoint — it was carried over from an earlier description
+of the project, not from `/v1/models`. Asked directly, the endpoint answers with a different roster
+entirely: `local-devstral-small2`, `local-mistral-small`, `local-gpt-oss`, `local-qwen36`,
+`local-llava`. None of those names is `qwen3-coder`. The lesson is the same one this site keeps
+running into: a name repeated from memory is not a measurement, and the fix was a thirty-second
+`curl`, not a excuse.
 
 That project tests the four coding-agent CLIs against itself and publishes the results. As of its
 last run:
@@ -53,13 +61,95 @@ last run:
 | **Gemini CLI** | does not — no documented way to point it at a custom endpoint |
 
 Since `generate.sh` defaults to `claude`, the first row is the short path: set the two variables and
-run the tutorial exactly as written.
+run the tutorial exactly as written. Note the scope of that table, though — it says the CLI can
+*reach* a self-hosted endpoint at all. It says nothing about whether what comes back is usable for
+*this* pipeline's specific, narrow, code-only prompt. That turned out to matter. See below.
 
-**What is verified here and what is not, stated plainly.** I confirmed the endpoint is live and
-key-gated (`/v1/models` answers `401 No api key passed in`), and that `generate.sh`'s hook is the
-single `CT_LLM_CMD` line above. **I have not run the sort pipeline against it** — access is by
-per-person key and I don't hold one. The CLI compatibility table is that project's measurement, not
-mine, and it is linked rather than restated so you can check when it was last run.
+**What is verified here and what is not, stated plainly.** The endpoint is live and key-gated
+(confirmed both as `401` without a key and `200` with one), `generate.sh`'s hook is the single
+`CT_LLM_CMD` line above, and — as of this update — **the pipeline has actually been run against it**,
+with a real key, for the first time. It did not produce a working participant. What follows is
+the honest account of that attempt, not a retrofitted success story.
+
+## What actually happened when I ran it
+
+Access arrived, credentials verified against `/v1/models` (`HTTP 200`), and the plan from the
+section above was executed for real: a participant scaffolded exactly per
+[Five seconds]({{ '/tutorials/five-seconds/' | relative_url }}), outside the clone, `AGENTS.md`
+written in the no-contract-vocabulary style this site's own harness page argues for, `generate.sh`
+pointed at the endpoint.
+
+**Three of the five models would not load.** `local-devstral-small2`, `local-mistral-small` and
+`local-gpt-oss` each returned `HTTP 500` from the endpoint, every time they were tried — for
+devstral the error was explicit and worth quoting because it names its own cause: *"model failed to
+load, this may be due to resource limitations or an internal error, check ollama server logs"*.
+That is an operator-side finding, not a specification problem, and it is reported as one below.
+Only `local-qwen36` answered at all (`local-llava` is a vision model and out of scope here).
+
+**Through `generate.sh`, `local-qwen36` did not produce code — twice, on two different
+specifications.** Both attempts returned the identical five words: *"I'm ready to help. What would
+you like to work on?"* — a stock assistant greeting, not a syntax error, not a partial program.
+`py_compile` correctly rejected it both times and the previous handler was left untouched, exactly
+as designed.
+
+The instinct at that point — and the instinct this page originally planned to act on — is to treat
+that as a specification problem and iterate `AGENTS.md`. So it was: the strategy went from a plain
+prose paragraph to an explicit four-step numbered procedure, the same upgrade in precision this
+site recommends everywhere else. **The output did not change at all.** Same five words, same
+non-answer, on a materially different spec. That result is the finding: whatever is going wrong
+here, `AGENTS.md` content is not the lever, and burning further serialized, single-GPU requests
+turning that same lever again would have been going through the motions rather than testing a
+hypothesis the first two runs had already put real doubt on.
+
+**So the next move was to change what could distinguish the two remaining explanations** — bad
+model, or something about the wrapper around it — the same discipline
+[When the measurement lies]({{ '/explanation/when-the-measurement-lies/' | relative_url }}) argues
+for everywhere: state the mechanism before the metric, and find the control arm rather than iterate
+blind. The control arm here: send the *exact same prompt* `generate.sh` builds directly to the
+endpoint's `/v1/messages`, bypassing the Claude Code CLI entirely — no system prompt, no tool-use
+scaffolding, no `--disallowedTools`.
+
+That call engaged with the actual task: a real `thinking` block reasoning correctly about
+implementing the described bubble-sort-like strategy, not a greeting. So the model can, in
+principle, follow the specification — **the failure is specific to the CLI wrapper `generate.sh`
+always drives generation through**, not to `AGENTS.md`, and not (at least not straightforwardly) to
+the model's ability to understand the task.
+
+That reframes the result rather than closing it. This is the same shape of mistake
+[case 5]({{ '/explanation/when-the-measurement-lies/' | relative_url }}#5-measuring-the-wrapper-blaming-the-language)
+on this site warns about, aimed at a different layer: the temptation was to blame the specification
+for a failure that belonged to the harness's generation step instead. The harness page's own
+account of "what a skill manipulates" separates four layers — contract, specification, generation
+step, gates — and names the generation step as one a participant does not touch by editing
+`AGENTS.md`. This result is that separation holding up exactly where it was supposed to: the fix,
+if there is one, is not available at the layer this exercise is scoped to.
+
+**The unwrapped call was also slow in a way that matters practically.** With a 2,000-token budget it
+exhausted the whole thing on `thinking` without reaching code. Raised to 8,000 tokens, it did not
+return within nine minutes before the client gave up — and by the end of this session, even a
+16-token throwaway request to the same model was timing out with no response at all. That is
+consistent with the serialization confounder this page already warned about below, likely made
+worse by the exploratory calls made during this same investigation competing for the one GPU. It
+means that even if the wrapper problem were solved, this model on this hardware may not fit the
+kind of interactive, few-minutes budget the rest of this site is built around.
+
+**No generated handler ever reached `dryrun.py`.** Nothing compiled, so `--require-adjacent`,
+`--require-optimal-swaps` and `--require-no-wasted-compares` were never exercised against this
+endpoint — there is nothing yet to report a pass rate for, and inventing one would be exactly the
+kind of small-sample overclaiming this site argues against elsewhere.
+
+**Stated plainly, because a page that only shows its successes teaches the wrong thing here too:**
+this attempt did not produce a working self-hosted participant. What it produced instead is a
+diagnosis — three models down at the infrastructure layer, and a fourth blocked by the generation
+wrapper rather than the specification, evidenced by a control-arm call rather than asserted. Per the
+project's own house style, that is reported to the endpoint's operator rather than silently retried
+into a nicer-looking number: the three `HTTP 500`s (with the exact Ollama error for devstral) and
+the CLI-wrapper-vs-specification finding above were both filed on
+[CADS-DEMO-local-llm#1](https://github.com/scimbe/CADS-DEMO-local-llm/issues/1). The natural next
+step — for whoever picks this back up — is not another `AGENTS.md` iteration; it's finding out
+whether the wrapper's system prompt can be trimmed or swapped for something this size of model can
+follow, and separately, whether the endpoint's reasoning-verbosity default can be turned down for a
+task this constrained.
 
 ## Measuring it without fooling yourself
 
@@ -159,8 +249,12 @@ Three things get harder at once, and none of them is the model's fault:
   `--require-adjacent`, `--require-optimal-swaps` and `--require-no-wasted-compares` are what tells
   you *which* part of your specification was too vague, instead of leaving you with "it didn't
   work".
-- **The specification has to carry more.** Everything the model cannot infer, you must have written
-  down. That is the same discipline the rest of this site teaches, applied where the slack runs out.
+- **The specification has to carry more — usually.** Everything the model cannot infer, you must
+  have written down; that is the same discipline the rest of this site teaches, applied where the
+  slack runs out. But it is not automatically where the slack *is*: the first real attempt against
+  this endpoint (below) hit a failure that two materially different specifications left identical,
+  and a control-arm test traced it to the generation wrapper instead. Carry more in the spec, but
+  check which layer actually ate the failure before you do.
 - **Failure moves to where you can see it.** A generation that fails against your own endpoint
   fails at build time, with a compile error you can read, on hardware you control.
 
@@ -180,3 +274,12 @@ thing you swapped is the part everyone assumes is decisive.
    sentence that fixed it would have been needed either way.
 4. Then take it online. A participant generated by your own model, answering rounds over a real
    channel, is the complete version of this exercise.
+
+**Where this stands against the worked target above:** step 1 and step 2 have been run for real —
+see [What actually happened when I ran it](#what-actually-happened-when-i-ran-it). Step 2 did not
+produce a compiling handler, so steps 3 and 4 have not happened yet. The blocker was diagnosed, not
+just hit: three of five models are currently down at the endpoint (reported upstream), and the
+fourth fails specifically inside the Claude Code CLI's generation wrapper, not at the specification
+layer — confirmed by a direct-API control call that the wrapped call does not make. Getting to step
+3 from here needs the endpoint's models restored and something to change about the wrapper or the
+model's reasoning-verbosity settings, not another spec rewrite.
