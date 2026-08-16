@@ -92,6 +92,25 @@ Two cheap fixes, both worth doing:
 - **Log cold starts separately** rather than folding them into the median. If you cannot tell which
   were cold, you cannot report a median at all — only a range you have to caveat.
 
+**And if what you are measuring is rule-following, sampling settings decide the answer.** This is
+the one that matters most for the question this site cares about. "How often does the generated
+handler emit a `compare` move the contract warned against" is a *deviation rate*, and deviation
+rates move with `temperature` and `top_p` before they move with anything else.
+
+Two things sit between you and a fair comparison:
+
+- **Defaults differ.** A local Ollama and a vendor API do not start from the same sampling settings.
+  Run both on their own defaults and a difference in the rate may be a temperature difference
+  wearing the model's name.
+- **A proxy can rewrite the request.** LiteLLM or anything like it may pass your parameters through,
+  override them, or add a system prompt of its own — and the response looks the same either way. An
+  injected framing prompt shifts exactly the behaviour you are measuring.
+
+So before the first real run: **set `temperature` and `top_p` explicitly on both sides**, verify the
+values actually arrive, and ask whoever runs the endpoint whether a system prompt is injected. If
+you cannot establish both, the honest label for your result is *this deployment*, not *this model* —
+the same distinction as with throughput above.
+
 The same caution applies to any pass/fail rate you collect. A slower endpoint under load changes
 timing, and timing changes which flaky things fail. Run each condition enough times to see a
 distribution, not a single result — [When the measurement lies]({{ '/explanation/when-the-measurement-lies/' | relative_url }})

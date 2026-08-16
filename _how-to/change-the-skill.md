@@ -158,6 +158,11 @@ idea, not a rule anyone wrote.
 The practical form: don't police words, state the distinction once. Then let the gate catch what
 survives.
 
+It is worth asking why the warning sat in prose in the first place, because the answer generalises:
+**prose is cheaper to write than a guard, and it feels just as right while you are writing it.**
+That is why the contract carried a correct sentence for months while three out of four generated
+handlers ignored it. Prose gets read when someone is looking; a gate holds when nobody is.
+
 This is worth sitting with, because it is the harness thesis in miniature. Nobody wrote a rule
 saying "emit a compare move per comparison." The specification said `comparing`, the contract has a
 `compare` move, and the generation step connected them. **The vocabulary of your spec is part of
