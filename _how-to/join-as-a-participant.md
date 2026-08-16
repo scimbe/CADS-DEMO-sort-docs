@@ -326,9 +326,27 @@ rounds=28 comparisons=0 swaps=27 faults=0 sorted=True inversions=27
 property checks passed: adjacent, no-wasted-compares, optimal-swaps
 ```
 
-So a FreeBSD machine can develop and verify a participant **completely**, and only the last step —
-joining the hosted arena — is out of reach, because that needs this binary. Verified up to exactly
-the point where one is missing.
+So a FreeBSD machine can develop and verify a participant **completely**. The last step — joining
+the hosted arena — needs a binary that no release ships, but that turns out to be a packaging gap
+rather than a technical one: `ct-agent` builds from source on FreeBSD unchanged, and the result
+works in production.
+
+```
+cargo build --release --bin ct-agent     8 min, Rust 1.96.1 from pkg, no patches
+```
+
+That binary then ran a real participant in the hosted arena:
+
+```
+you  fbsd-0816   finishedCorrectly True
+comparisons 0    swaps 45    faults 0    transportFaults 0    rounds 46
+```
+
+`0 + 45 + 1 = 46`, the same accounting as everywhere else, over the real edge relay. So if you are
+on FreeBSD and willing to compile, you are not blocked — you are just doing the release pipeline's
+job yourself. Tracked as [ct-agent#27](https://github.com/scimbe/ct-agent/issues/27).
+
+One honest limit on that result: it was built and run on **arm64** FreeBSD. `x86_64` is untested.
 
 Two things cost time on a fresh FreeBSD that cost nothing elsewhere, and neither is obvious:
 
