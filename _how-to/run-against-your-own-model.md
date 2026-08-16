@@ -127,6 +127,20 @@ Two consequences worth carrying:
   `context_management` are Anthropic-shaped. A proxy in front of another model will ignore or reject
   them, and that is another difference in the request you did not choose. Ask what happens to them.
 
+**Better than labelling it: measure how much it matters.** Since the CLI sends nothing, the proxy is
+the only place sampling can be set at all — so on the self-hosted side you can usually pick the
+value. Run the same series at two or three temperatures and watch the violation rate:
+
+- **If it barely moves** across a plausible range, the deployment caveat is empirically defused.
+  Your comparison gets most of its meaning back, and you have evidence for that rather than a
+  footnote.
+- **If it moves a lot**, you have answered a different and more useful question: the violation rate
+  is *sampling-dominated*, which means a prose rule in the contract leaks before model choice even
+  enters the picture. For a site arguing that unchecked rules are not properties, that is the
+  stronger result.
+
+Either way you end up with a number that carries an argument, instead of a number with a disclaimer.
+
 None of this makes the exercise pointless — the question this site asks is whether the harness holds
 when something underneath changes, and a deployment difference is a perfectly good instance of that.
 It only means the label has to say what actually varied.
