@@ -61,6 +61,27 @@ single `CT_LLM_CMD` line above. **I have not run the sort pipeline against it** 
 per-person key and I don't hold one. The CLI compatibility table is that project's measurement, not
 mine, and it is linked rather than restated so you can check when it was last run.
 
+## Measuring it without fooling yourself
+
+A self-hosted endpoint is usually **one GPU behind a queue**, and that changes which numbers mean
+anything. The endpoint used as the example here serialises every request through a global lock so
+two generations cannot collide over VRAM.
+
+The consequence is worth stating before you design the experiment rather than after:
+
+- **Per-request latency stays meaningful.** Median and spread of a single generation are a property
+  of the model and the hardware, and comparable to a vendor API.
+- **Throughput does not.** Run five generations at once against a serialising endpoint and you have
+  measured the queue, not the model. Against a vendor API the same five run in parallel. Comparing
+  those two totals produces a number that looks like a model difference and is not one.
+- **So compare one at a time**, and say which you did. If you want a throughput figure anyway, it is
+  a statement about the deployment, not about the model — label it that way.
+
+The same caution applies to the failure rates below. A slower endpoint under load changes timing,
+and timing changes which flaky things fail. Run each condition enough times to see a distribution,
+not a single result — [When the measurement lies]({{ '/explanation/when-the-measurement-lies/' | relative_url }})
+is eight cases of exactly that going wrong.
+
 ## Why this is the hard version
 
 Three things get harder at once, and none of them is the model's fault:
