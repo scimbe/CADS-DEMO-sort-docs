@@ -146,6 +146,12 @@ model: the contract is spoken by the generated Python, and that runs locally.
 If you have no CLI installed, everything up to here still worked — you already have a sorting
 participant. You just can't replace it with your own strategy yet.
 
+**And the CLI does not have to talk to a vendor.** `generate.sh` only knows `CT_LLM_CMD`; where that
+tool sends its request is the tool's business. Pointing the whole pipeline at a model on your own
+GPU is two environment variables — and it is the hardest and most convincing version of this
+exercise, because the one thing you swap is the part everyone assumes is decisive. See
+[Run it against your own model]({{ '/how-to/run-against-your-own-model/' | relative_url }}).
+
 Then generate and verify:
 
 ```bash

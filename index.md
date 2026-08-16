@@ -45,9 +45,9 @@ brings up the same bridge locally in about a minute — every tutorial works aga
 
 ## If you're here to learn the harness, not to sort
 
-Read these five in order. They're the argument, and each one is grounded in measurements from this
-arena rather than assertion. The fourth lets you check whether it landed; the fifth is what
-happens when the measurements behind all of it are wrong:
+Read these six in order. They're the argument, and each one is grounded in measurements from this
+arena rather than assertion. The fourth lets you check whether it landed, the fifth is the hardest
+variation, and the sixth is what happens when the measurements behind all of it are wrong:
 
 1. [Five seconds to your first sorter]({{ '/tutorials/five-seconds/' | relative_url }}) — get
    something running, then see the same model produce measurably different participants.
@@ -59,7 +59,11 @@ happens when the measurements behind all of it are wrong:
    thing and nothing checked, so it happened in 20 of 27 generations anyway.
 4. [Check yourself]({{ '/tutorials/check-yourself/' | relative_url }}) — six predictions, each with
    a command that settles it. One of them catches a claim this site itself got wrong.
-5. [When the measurement lies]({{ '/explanation/when-the-measurement-lies/' | relative_url }}) —
+5. [Run it against your own model]({{ '/how-to/run-against-your-own-model/' | relative_url }}) —
+   the hard version: swap where the model lives, change nothing else, and see whether your gates
+   were doing the work. If a self-hosted model's participant passes the same checks, the argument
+   above stops being a slogan.
+6. [When the measurement lies]({{ '/explanation/when-the-measurement-lies/' | relative_url }}) —
    eight wrong claims published here, and what every one of them had in common. Two fail in
    opposite directions — one instrument missed real cases, the other invented them — and the last
    is the same question answered wrongly three times, each with more data than before. If you build
