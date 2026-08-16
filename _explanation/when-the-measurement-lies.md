@@ -141,9 +141,25 @@ broken parser gives the same wrong answer every time and eventually gets caught.
 different answer each run, and every run supports a story — so the stories keep getting told, each one
 better-evidenced than the last and still not true.
 
-**The habit that ended it was not more care.** It was replacing single runs with rates: five runs per
-test per platform. That takes twenty minutes and settles what four rounds of reasoning could not.
-When a measurement varies, the only honest unit is a distribution.
+There was a fourth round, and it is the one worth remembering. After a commit touched that code, a
+three-run sample showed two of the tests passing 3/3 — read as "practically gone", with the caveat
+that three runs don't support it written in the same paragraph. Twenty runs each:
+
+| | 3 runs | 20 runs |
+|---|---|---|
+| test A | 4/5 fail | **20/20 fail** |
+| test B | 1/3 | 5/20 — **25 %** |
+| test C | 0/3 → "gone" | 8/20 — **40 %** |
+| test D | 0/3 → "gone" | 8/20 — **40 %** |
+
+Nothing had been fixed. At a 40 % failure rate, three passes in a row happen 22 % of the time — not
+rare, just quiet. The caveat was written and then overridden by the shape of the numbers.
+
+**The habit that ended it was not more care.** It was replacing single runs with rates: twenty runs
+per test. That takes forty minutes and settles what four rounds of reasoning could not — and the four
+rounds cost more than forty minutes. When a measurement varies, the only honest unit is a
+distribution, and a sample too small to see the distribution is not a cheap version of one. It is a
+story generator.
 
 ## What they have in common
 
