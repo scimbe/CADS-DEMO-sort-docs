@@ -1,6 +1,6 @@
 ---
 title: When the measurement lies
-description: Seven wrong claims published on this site in one day, each caused by an unstated assumption in the measuring tool rather than in the system.
+description: Eight wrong claims published on this site, each caused by an unstated assumption in the measuring tool rather than in the system — the last one told three times before it stuck.
 order: 4
 ---
 
@@ -10,7 +10,7 @@ Every other page here argues for checking things: gates, property flags, exit co
 other half, and it is the uncomfortable half. **A check is only as good as the instrument behind it,
 and instruments carry assumptions nobody wrote down.**
 
-The seven cases below are not hypothetical. Each was published on this site or reported to the
+The eight cases below are not hypothetical. Each was published on this site or reported to the
 project as fact, and each was wrong. They happened within a single day, to someone actively looking
 for this kind of error. That is the point: knowing about the failure mode does not make you immune
 to it.
@@ -118,6 +118,33 @@ had worked. Two more guesses were made at a bug that no longer existed before th
 **The assumption:** that "extends past the viewport" and "makes the page scroll" are the same
 question. They differ precisely where the fix operates.
 
+## 8. A noisy instrument, three confident stories
+
+The seven above are single wrong claims. This one is different: **the same question, answered wrongly
+three times in a row, each time with more data than the last.**
+
+A test suite failed 5 of 307 on one platform. The successive conclusions, all published:
+
+| | Claim | What killed it |
+|---|---|---|
+| 1 | "four fail reproducibly on FreeBSD" | a control arm on macOS — the same tests fail there too |
+| 2 | "three are FreeBSD-specific" | running them individually on macOS: three of four fail |
+| 3 | "they are order-dependent" | running each five times: two are order-dependent, two are simply flaky |
+
+Only the fourth attempt held, and it is much weaker than the first: **the outcome of these four tests
+depends on invocation form, machine speed and execution order, so no comparison between platforms can
+be read from them at all** — including the 4-versus-1 batch difference that the third attempt had
+called "the only clean number I have".
+
+What made this different from the others is that the instrument was **noisy rather than wrong**. A
+broken parser gives the same wrong answer every time and eventually gets caught. A flaky test gives a
+different answer each run, and every run supports a story — so the stories keep getting told, each one
+better-evidenced than the last and still not true.
+
+**The habit that ended it was not more care.** It was replacing single runs with rates: five runs per
+test per platform. That takes twenty minutes and settles what four rounds of reasoning could not.
+When a measurement varies, the only honest unit is a distribution.
+
 ## What they have in common
 
 None of these was a mistake in the system under test. Every one was an unstated assumption inside
@@ -132,6 +159,7 @@ the measurement:
 | 5 | the timed thing is the named thing |
 | 6 | a filter written for one instance covers the category |
 | 7 | "extends past the viewport" is the same question as "scrolls" |
+| 8 | a single run of a varying measurement is a measurement |
 
 Six and seven fail in opposite directions, which is worth noticing: one instrument **missed** real
 cases, the other **invented** them. Both felt equally reliable while wrong.
@@ -160,15 +188,15 @@ Not a checklist to complete, but the moves that actually did the work here:
   of the connection saw a process that had been reported stopped three times. No amount of care on
   this side would have found it, because the instrument and the belief shared the same blind spot.
 
-None of this is about being careful. All seven were made while being careful. It is about the
+None of this is about being careful. All eight were made while being careful. It is about the
 instrument being part of the system, and therefore something the harness has to check too — which
 is the same argument this site makes everywhere else, turned back on the person making it.
 
 ## Why this page exists
 
 Because a training that only shows its successes teaches the wrong thing. If you build gates and
-harnesses on the strength of measurements, the measurement is load-bearing, and a page listing seven
-failures in one day is more useful for that than a page implying they don't happen.
+harnesses on the strength of measurements, the measurement is load-bearing, and a page listing eight
+failures is more useful for that than a page implying they don't happen.
 
 Every corrected figure above is now the one this site publishes. The retractions are in the commit
 history and in the project's issue thread, named rather than quietly overwritten — which is the

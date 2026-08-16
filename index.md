@@ -60,9 +60,10 @@ happens when the measurements behind all of it are wrong:
 4. [Check yourself]({{ '/tutorials/check-yourself/' | relative_url }}) — six predictions, each with
    a command that settles it. One of them catches a claim this site itself got wrong.
 5. [When the measurement lies]({{ '/explanation/when-the-measurement-lies/' | relative_url }}) —
-   seven wrong claims published here in one day, and what every one of them had in common. Two of
-   them fail in opposite directions: one instrument missed real cases, the other invented them. If
-   you build gates on measurements, the measurement is load-bearing too.
+   eight wrong claims published here, and what every one of them had in common. Two fail in
+   opposite directions — one instrument missed real cases, the other invented them — and the last
+   is the same question answered wrongly three times, each with more data than before. If you build
+   gates on measurements, the measurement is load-bearing too.
 
 ## Sections
 
