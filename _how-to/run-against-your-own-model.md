@@ -77,6 +77,21 @@ The consequence is worth stating before you design the experiment rather than af
 - **So compare one at a time**, and say which you did. If you want a throughput figure anyway, it is
   a statement about the deployment, not about the model — label it that way.
 
+**And the model may not be in memory when you ask.** Ollama unloads after an idle timeout —
+30 minutes on the example endpoint. The first request after a pause therefore contains the model
+*load* time as well as the generation, and for a 30-billion-parameter model that is not a rounding
+error. A vendor API has no equivalent: nothing there gets colder while you think.
+
+This bites precisely the way you will work. You run one generation, look at the result, think, run
+the next — and the thinking was long enough to unload the model. Half your samples are then cold
+starts, and the spread you report is half model and half cache state.
+
+Two cheap fixes, both worth doing:
+
+- **Send a throwaway warm-up request before each series** and discard it.
+- **Log cold starts separately** rather than folding them into the median. If you cannot tell which
+  were cold, you cannot report a median at all — only a range you have to caveat.
+
 The same caution applies to any pass/fail rate you collect. A slower endpoint under load changes
 timing, and timing changes which flaky things fail. Run each condition enough times to see a
 distribution, not a single result — [When the measurement lies]({{ '/explanation/when-the-measurement-lies/' | relative_url }})
