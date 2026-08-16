@@ -106,10 +106,30 @@ Two things sit between you and a fair comparison:
   override them, or add a system prompt of its own — and the response looks the same either way. An
   injected framing prompt shifts exactly the behaviour you are measuring.
 
-So before the first real run: **set `temperature` and `top_p` explicitly on both sides**, verify the
-values actually arrive, and ask whoever runs the endpoint whether a system prompt is injected. If
-you cannot establish both, the honest label for your result is *this deployment*, not *this model* —
-the same distinction as with throughput above.
+**And through this path you cannot fix it.** Point `ANTHROPIC_BASE_URL` at a local capture server
+and run one `claude -p`, and the request body is:
+
+```json
+{ "model": "claude-sonnet-5", "max_tokens": 64000,
+  "thinking": { "type": "adaptive" }, "output_config": { "effort": "high" },
+  "context_management": { … } }
+```
+
+No `temperature`, no `top_p`, no `top_k` — and the CLI has no flags for them either. Both sides
+therefore run on **their own server-side defaults**, and you cannot equalise them.
+
+Two consequences worth carrying:
+
+- **Label the result honestly.** It is a statement about *this deployment*, not *this model* — the
+  same distinction as with throughput above. Ask the endpoint's operator which sampling settings
+  their stack applies, and write those down next to your numbers rather than omitting them.
+- **The request contains vendor-specific fields.** `thinking`, `output_config` and
+  `context_management` are Anthropic-shaped. A proxy in front of another model will ignore or reject
+  them, and that is another difference in the request you did not choose. Ask what happens to them.
+
+None of this makes the exercise pointless — the question this site asks is whether the harness holds
+when something underneath changes, and a deployment difference is a perfectly good instance of that.
+It only means the label has to say what actually varied.
 
 The same caution applies to any pass/fail rate you collect. A slower endpoint under load changes
 timing, and timing changes which flaky things fail. Run each condition enough times to see a
