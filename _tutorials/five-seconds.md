@@ -127,11 +127,24 @@ different origins. Without it the page assumes same-origin. Full detail in
 
 Nothing above involved a model. That changes now.
 
-**Do this in the new terminal from the step above, inside `mysorter/`** — the same directory that
-has `handler.sh` and `generate.sh` in it, not the clone. If this is a different terminal than the
-one that created it, or you're not sure where you are, run the re-entry check from "Where you are,
-and how to get back" (0:01, above) first. Then create the file at exactly `mysorter/AGENTS.md` —
-next to `generate.sh`, not inside `generated/`:
+**Do this in the new terminal from the step above.** It is a fresh shell — `REPO` and
+`SORT_PROTOCOL_MD` are not set in it yet, even though you set them earlier in the *other* terminal.
+Run the re-entry block from "Where you are, and how to get back" (0:01, above) now, in this
+terminal, before anything else:
+
+```bash
+cd /path/to/mysorter                                   # your participant directory
+export REPO="$(cd ../CADS-DEMO-sort && pwd)"           # adjust if your clone sits elsewhere
+export SORT_PROTOCOL_MD="$REPO/participants/CLAUDE.md"
+```
+
+**Skip this and `./generate.sh` fails with `cat: .../CLAUDE.md: No such file or directory`** — that
+exact message, because unset `SORT_PROTOCOL_MD` makes `generate.sh` fall back to a path
+(`mysorter/../CLAUDE.md`) that only exists if your participant sits inside the clone, which since
+0:01 it deliberately doesn't. If you hit that error, this is why — export the three lines above and
+retry.
+
+Now create the file at exactly `mysorter/AGENTS.md` — next to `generate.sh`, not inside `generated/`:
 
 ```bash
 cat > AGENTS.md <<'EOF'
