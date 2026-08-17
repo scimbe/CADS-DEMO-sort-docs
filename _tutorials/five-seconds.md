@@ -115,6 +115,22 @@ arena down with it — and the next command in this tutorial re-opens the same p
 still answer. A second terminal removes the question entirely: this one just runs the two servers
 and you leave it alone.
 
+**Confirmed the other direction too: Ctrl-C in this terminal does not stop them either.** They are
+backgrounded, so a Ctrl-C here has nothing in the foreground to hit — the servers are still running,
+and re-running the two start commands fails with `Address already in use` /
+`Error: listen EADDRINUSE`. That is not a broken restart, it's the previous pair still holding both
+ports. Stop them by port, then start again:
+
+```bash
+lsof -ti:8789 -ti:8000 | xargs kill    # macOS/Linux; still not free after this, check for
+                                        # a process from a different terminal session:
+pkill -f "bridge/server.js"
+pkill -f "http.server 8000"
+```
+
+On Windows (PowerShell): `Get-NetTCPConnection -LocalPort 8789,8000 | Select OwningProcess`, then
+`Stop-Process -Id <that PID>` for each.
+
 Then open **`http://127.0.0.1:8000/index.html?bridge=http://127.0.0.1:8789`** and hit *Solo run*.
 
 ![A completed solo run: sorted bars, the round timeline, the move log, and the scorecard]({{ '/assets/participant-01-first-run.png' | relative_url }})
