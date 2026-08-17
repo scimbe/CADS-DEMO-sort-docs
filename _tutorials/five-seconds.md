@@ -177,9 +177,36 @@ the example; typing or pasting it verbatim gets you the same adjacent-swap handl
 
 ### What actually generates the code
 
+**The word for everything in this section is "the harness."** Not the model — the model is just
+one call, made once, that answers and is never consulted again while your sorter runs. The harness
+is everything *around* that one call: the move contract (what a "move" is even allowed to be), your
+`AGENTS.md` (what strategy you're asking for), `generate.sh` itself (how the request gets built and
+what happens to the answer), and the three checks a few paragraphs down (what gets proven true
+before anything goes live). This whole site's point, made concrete: change any one of those four
+things and you get a measurably different participant, with the exact same model underneath every
+time.
+
 `generate.sh` does not contain a model. It **shells out to a coding-agent CLI that you have
 installed and signed in**, hands it the move contract plus your `AGENTS.md`, and writes whatever
-comes back to `generated/handler.py`.
+comes back to `generated/handler.py`. Concretely, in order:
+
+1. It reads two files from disk: the move contract (`$SORT_PROTOCOL_MD`) and your `AGENTS.md`.
+2. It drops both into a fixed template with four labeled sections — GOAL, CONTEXT, CONSTRAINTS,
+   OUTPUT — and nothing else. **You can read that exact template right now, before running
+   anything:** open `generate.sh` in an editor and look for the block between
+   `cat <<'TEMPLATE_EOF'` and the matching `TEMPLATE_EOF` a few dozen lines down. That's the whole
+   prompt, verbatim, with your `AGENTS.md` slotted into CONTEXT. There's no hidden system prompt on
+   top of it from this side of the pipeline.
+3. It sends that assembled text to whichever CLI `CT_LLM_CMD` points at, and gets back one thing:
+   Python source code — not commentary, not a conversation, just the contents of a `.py` file.
+4. It writes that text to `generated/handler.py`, but only after checking it actually compiles
+   (`py_compile`) — a broken draft never overwrites a working handler.
+
+**You genuinely don't need to read the generated Python to know it works — the three checks below
+do that job mechanically.** But if you're curious what a model actually wrote for you, there's
+nothing to hide: `cat generated/handler.py` after a run shows you exactly what's about to answer
+every round. It's a plain, short Python file — usually well under 50 lines for a sorting strategy —
+reading `json.load(sys.stdin)`, deciding one move, and printing it back out.
 
 ```bash
 LLM="${CT_LLM_CMD:-claude}"        # this is the line in generate.sh that picks the tool
@@ -245,7 +272,8 @@ first. That was correct at the time and isn't any more.)
   Python traceback rather than a message. Reported.
 - Never hand-edit `generated/handler.py`. It's a build artifact; `AGENTS.md` is the source. The next
   regeneration overwrites your edit.
-- You do not need to read the generated Python. The three checks are what "it works" means here.
+- The three checks, not a read-through, are what "it works" means here — but `cat
+  generated/handler.py` is always there if you want to see what got written.
 
 ## What just happened
 
