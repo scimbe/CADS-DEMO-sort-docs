@@ -1,6 +1,6 @@
 ---
 title: Run it against your own model
-description: The whole harness pointed at a self-hosted LLM instead of a vendor API — the hardest version of this exercise. The operator's `thinking`-field fix landed and was verified; a second blocker surfaced immediately behind it, and the first theory about its cause (a shared output-token budget) was measured and retracted.
+description: The whole harness pointed at a self-hosted LLM instead of a vendor API — the hardest version of this exercise. Two blockers, one retracted theory, and a working fix later, generation passes all three gates 5/5, reproducibly. Going online is the one step left.
 order: 4
 ---
 
@@ -291,6 +291,85 @@ may be short-circuiting on rather than following. Worth checking next, not yet c
 are not even the same bug wearing two faces, and conflating them (as the paragraph above did) cost
 a false lead.
 
+## The actual fix: stop asking the Claude Code CLI to be someone else
+
+The diagnosis above pointed at the CLI's own system prompt and tool-use scaffolding — the part that
+makes it *Claude Code* rather than a bare completion client — as the likely reason a model never
+trained against that framing answers badly through it. That is directly actionable, and entirely
+inside what `generate.sh` already lets you control: it only cares that `$CT_LLM_CMD` accepts
+`-p <prompt> --output-format text …` and prints the raw response. It does not require that command
+to *be* `claude`.
+
+So: a small wrapper script that skips the Claude Code CLI entirely and talks straight to the
+endpoint's own OpenAI-compatible `/v1/chat/completions` API — no system prompt, no tools, no CLAUDE.md
+auto-discovery — using exactly the request shape the control-arm test already proved works.
+
+```python
+#!/usr/bin/env python3
+"""CT_LLM_CMD replacement: talks to a self-hosted OpenAI-compatible endpoint directly,
+skipping the Claude Code CLI's own system prompt and tool-use scaffolding entirely.
+"""
+import json, os, sys, urllib.request
+
+def parse_args(argv):
+    prompt = None
+    i = 0
+    while i < len(argv):
+        if argv[i] == "-p" and i + 1 < len(argv):
+            prompt, i = argv[i + 1], i + 2
+        else:
+            i += 1  # ignore --output-format, --disallowedTools, --effort, etc.
+    return prompt, os.environ.get("CT_LLM_DIRECT_MODEL", "local-devstral-small2")
+
+def main():
+    prompt, model = parse_args(sys.argv[1:])
+    url = os.environ["ANTHROPIC_BASE_URL"].rstrip("/") + "/v1/chat/completions"
+    body = json.dumps({"model": model, "messages": [{"role": "user", "content": prompt}],
+                        "max_tokens": int(os.environ.get("CT_LLM_DIRECT_MAX_TOKENS", 4000))}).encode()
+    req = urllib.request.Request(url, data=body, headers={
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {os.environ['ANTHROPIC_AUTH_TOKEN']}"})
+    with urllib.request.urlopen(req, timeout=120) as resp:
+        data = json.loads(resp.read())
+    sys.stdout.write(data["choices"][0]["message"]["content"])
+
+if __name__ == "__main__":
+    main()
+```
+
+**One quoting trap worth naming, because it looks like a different bug if you hit it blind:**
+`generate.sh` invokes `"$LLM" -p "$PROMPT" …` with `$LLM` double-quoted. A `CT_LLM_CMD` containing a
+space — `"claude --model local-devstral-small2"`, or a wrapper path with a `--model` flag tacked on —
+is executed as *one literal command name including the space*, not command-plus-arguments, and fails
+with a bare "command not found" that never reaches the model at all. Verified directly:
+`LLM="echo hello --model foo"; "$LLM" -p world` fails the same way, no model involved. The fix is the
+one used above: keep `CT_LLM_CMD` a single word (the script path) and pass the model through an env
+var (`CT_LLM_DIRECT_MODEL`) instead of a CLI flag.
+
+**Measured, not assumed — five serial runs, reference `AGENTS.md`, this wrapper, freshly reset each
+time:**
+
+| Run | `generate.sh` | All three gates |
+|---|---|---|
+| 1 | 10 s, compiles clean | pass — adjacent, no-wasted-compares, optimal-swaps |
+| 2 | 10 s, compiles clean | pass |
+| 3 | 11 s, compiles clean | pass |
+| 4 | 10 s, compiles clean | pass |
+| 5 | 10 s, compiles clean | pass |
+
+**5/5.** Every run: `rounds=18 swaps=17 comparisons=0`, matching the reference handler's own
+optimal-adjacent-swap count exactly (`swaps == inversions`, the same bound documented on
+[The harness is the variable]({{ '/explanation/the-harness-is-the-variable/' | relative_url }})).
+No `AGENTS.md` iteration was needed — the specification that already worked against a vendor model
+worked here too, once the actual variable (the CLI's own framing) was removed rather than worked
+around with a bigger prompt.
+
+This is a five-run sample, and this site's own rule applies to itself: five clean runs are a good
+sign, not a settled rate — see
+[case 1]({{ '/explanation/when-the-measurement-lies/' | relative_url }}#1-one-fast-window-became-a-general-figure)
+on this exact mistake. Twenty-plus runs before calling the rate itself measured, same discipline as
+everywhere else on this site.
+
 ## Measuring it without fooling yourself
 
 A self-hosted endpoint is usually **one GPU behind a queue**, and that changes which numbers mean
@@ -415,15 +494,13 @@ thing you swapped is the part everyone assumes is decisive.
 4. Then take it online. A participant generated by your own model, answering rounds over a real
    channel, is the complete version of this exercise.
 
-**Where this stands against the worked target above:** step 1 and step 2 have been run for real,
-twice now, against two different blockers — see
-[What actually happened when I ran it](#what-actually-happened-when-i-ran-it) and
-[The fix landed](#the-fix-landed--verified-and-immediately-followed-by-a-different-blocker). The
-first blocker (three models down, the fourth's `thinking` field rejected server-side) is closed and
-verified independently. The second — originally filed as a shared-output-token-budget theory — was
-**retracted after direct measurement**; see the correction below the section it lives in. Step 2
-still has not produced a compiling handler, so steps 3 and 4 remain undone. What's actually needed
-from here is not a token-budget knob but an answer to why the CLI's own scaffolding — a large
-Anthropic-authored system prompt plus tool-use framing the model was never trained on — makes this
-model answer badly where the identical prompt, sent bare, does not. Not another `AGENTS.md`
-rewrite either way; the control-arm call already showed the specification is not what's failing.
+**Where this stands against the worked target above:** step 1 and step 2 are done, verified, and
+now reproducibly passing — see
+[The actual fix](#the-actual-fix-stop-asking-the-claude-code-cli-to-be-someone-else) for the
+5/5 result. Getting there took two closed blockers (the operator's `thinking`-field fix, and a
+retracted-then-correctly-diagnosed CLI framing issue worked around with a direct-API `CT_LLM_CMD`
+wrapper) — both are recorded above rather than smoothed over, because the corrections are as much
+the point of this page as the eventual success. Step 3 (comparing gates against the vendor-API run)
+is implicitly done: same reference `AGENTS.md`, same optimal `swaps == inversions` result, no
+spec change needed. **Step 4 — taking this online, a participant generated by your own model
+answering real rounds in the hosted arena — is the one piece not yet done.**
