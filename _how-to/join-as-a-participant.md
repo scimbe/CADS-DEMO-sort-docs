@@ -246,7 +246,7 @@ failure mode described above, and it removes it.
 
 The path is: sign in, open `bunsenbrenner.org/portal/channels`, and every channel your e-mail is
 allow-listed for appears by itself with a claim link. Click *Claim membership*, the owner (or an
-automated bridge) deposits your grant, reload, and the `.env` block is complete.
+automated bridge) deposits your grant, reload, and the serve block (Step 4, below) is complete.
 
 Walked end to end against the live deployment, cold start with headless Chrome, login included:
 
@@ -254,7 +254,7 @@ Walked end to end against the live deployment, cold start with headless Chrome, 
 |---|---|
 | Claim link → signed in → claim page ready | 3.4 s |
 | *Claim membership* → membership confirmed | 4.1 s |
-| Reload after the grant was deposited → complete `.env` | 4.1 s |
+| Reload after the grant was deposited → complete serve block | 4.1 s |
 
 Three things are worth knowing before you use it:
 
@@ -276,17 +276,36 @@ Within a second or two of submitting — assuming the normal auto-approved path 
 channel grant already filled in:
 
 ```bash
-CT_CHANNEL_ROLE=accept CT_CHANNEL_SERVE=1 CT_CHANNEL_RELAY_ONLY=1 \
-CT_CHANNEL_BROKER=<filled in> CT_CHANNEL_RELAY=<filled in> \
-CT_CHANNEL_FRONT_DOOR=<filled in> CT_CHANNEL_FRONT_DOOR_CERT=<filled in> \
-CT_CHANNEL_FRONT_DOOR_ONLY=1 \
-CT_CHANNEL_GRANT=<your grant, filled in> \
-CT_CHANNEL_HOLDER_KEY=<your private key from Step 3> \
-CT_CHANNEL_NOISE_KEY=<your private key from Step 3> \
-CT_AGENT_SERVICE_HANDLER_CMD=./handler.sh \
-CT_AGENT_SERVICES=text_generation \
-  ct-agent channel
+export CT_CHANNEL_ROLE=accept
+export CT_CHANNEL_SERVE=1
+export CT_CHANNEL_RELAY_ONLY=1
+export CT_CHANNEL_BROKER=<filled in>
+export CT_CHANNEL_RELAY=<filled in>
+export CT_CHANNEL_FRONT_DOOR=<filled in>
+export CT_CHANNEL_FRONT_DOOR_CERT=<filled in>
+export CT_CHANNEL_FRONT_DOOR_ONLY=1
+export CT_CHANNEL_GRANT=<your grant, filled in>
+export CT_CHANNEL_HOLDER_KEY=<your private key from Step 3>
+export CT_CHANNEL_NOISE_KEY=<your private key from Step 3>
+export CT_AGENT_SERVICE_HANDLER_CMD=./handler.sh
+export CT_AGENT_SERVICES=text_generation
+ct-agent channel
 ```
+
+**This is not a `.env` file** — nothing here reads or sources one. It is a literal shell
+transcript: paste it straight into your terminal and the last line (`ct-agent channel`) runs
+immediately, using the exports above it in the same shell. Two ways to use it:
+
+- **Paste and go.** The fastest path — copy the whole block from the join page, paste, done.
+- **Save it as a script first**, if you want to review it, keep it, or run it later — any filename,
+  any path, it doesn't need to be `.env` or live anywhere specific:
+  ```bash
+  # paste the block into serve.sh, then:
+  bash serve.sh
+  ```
+  Since every line is a real `export` followed by the command, running it as a script works exactly
+  like pasting it — no `source` needed, because `ct-agent channel` is the last line of the same
+  script, not a separate step.
 
 **Copy the serve block as one piece, and check nothing was lost on the way.** The block sets a
 dozen variables; if any of them does not survive the trip through your clipboard and terminal,
@@ -412,15 +431,31 @@ wait. If you see the latter, you're missing `CT_CHANNEL_FRONT_DOOR_ONLY=1` above
 
 **Your private keys live only in the browser you claimed in.** Re-opening the claim page elsewhere
 mints a *fresh* identity, which does not match the grant already issued for your original one. The
-page detects that and blocks the `.env` block with a warning naming both identities — so you will be
-told rather than handed something broken. Move the block as a file, or paste it, from the machine
-you claimed on.
+page detects that and blocks the serve block with a warning naming both identities — so you will be
+told rather than handed something broken. Move it to a different machine as a saved script (see
+"Save it as a script first" under Step 4, above), or paste it directly, from the machine you claimed
+on.
 
-Copy that onto whichever machine actually has `./handler.sh` and `ct-agent` (from
-[the releases page](https://github.com/scimbe/ct-agent/releases/latest), Windows included — a
-downloaded `.exe` just runs, no build step). Run it there. `CT_CHANNEL_RELAY_ONLY=1` means this
-process has no dialable address of its own — it only ever answers inbound calls, which is
-everything the `sort` role needs.
+If `ct-agent` isn't already on the machine you're serving from, one command gets the right binary
+for your platform (macOS/Linux; see below for Windows) — verified against the actual release
+assets, not guessed from `uname` alone: macOS's Apple Silicon reports `arm64` via `uname -m`, but
+the asset is named `aarch64`, so that one substitution is made explicit rather than left to fail:
+
+```bash
+ARCH="$(uname -m)"; [ "$ARCH" = "arm64" ] && ARCH="aarch64"
+OS="$(uname -s | tr 'A-Z' 'a-z')"
+curl -fsSL "https://github.com/scimbe/ct-agent/releases/latest/download/ct-agent-${OS}-${ARCH}" -o ct-agent && chmod +x ct-agent
+```
+
+Covers macOS (Intel `x86_64`, Apple Silicon `arm64`→`aarch64`) and Linux (`x86_64`, `aarch64`). If it
+404s — e.g. 32-bit Linux, whose `uname -m` doesn't match the release's `i686` — the exact filenames
+are on [the releases page](https://github.com/scimbe/ct-agent/releases/latest). On Windows, download
+the `.exe` from the same page and run it directly, no install step.
+
+Copy the serve block onto whichever machine actually has `./handler.sh` and `ct-agent` (see above
+for getting the binary there), and run it. `CT_CHANNEL_RELAY_ONLY=1` means this process has no
+dialable address of its own — it only ever answers inbound calls, which is everything the `sort`
+role needs.
 
 Three things worth knowing if the run doesn't come up cleanly:
 
