@@ -60,9 +60,9 @@ variation, and the sixth is what happens when the measurements behind all of it 
 4. [Check yourself]({{ '/tutorials/check-yourself/' | relative_url }}) — six predictions, each with
    a command that settles it. One of them catches a claim this site itself got wrong.
 5. [Run it against your own model]({{ '/how-to/run-against-your-own-model/' | relative_url }}) —
-   the hard version: swap where the model lives, change nothing else, and see whether your gates
-   were doing the work. If a self-hosted model's participant passes the same checks, the argument
-   above stops being a slogan.
+   the hard version, run to completion: swap where the model lives, change nothing else, and watch
+   the same gates hold. A self-hosted model's participant passes every check and finishes a real
+   round in the hosted arena — proof the argument above was never a slogan.
 6. [When the measurement lies]({{ '/explanation/when-the-measurement-lies/' | relative_url }}) —
    eight wrong claims published here, and what every one of them had in common. Two fail in
    opposite directions — one instrument missed real cases, the other invented them — and the last
