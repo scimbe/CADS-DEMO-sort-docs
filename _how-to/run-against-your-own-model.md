@@ -105,7 +105,8 @@ def main():
     prompt, model = parse_args(sys.argv[1:])
     url = os.environ["ANTHROPIC_BASE_URL"].rstrip("/") + "/v1/chat/completions"
     body = json.dumps({"model": model, "messages": [{"role": "user", "content": prompt}],
-                        "max_tokens": int(os.environ.get("CT_LLM_DIRECT_MAX_TOKENS", 4000))}).encode()
+                        "max_tokens": int(os.environ.get("CT_LLM_DIRECT_MAX_TOKENS", 4000)),
+                        "temperature": float(os.environ.get("CT_LLM_DIRECT_TEMPERATURE", 0))}).encode()
     req = urllib.request.Request(url, data=body, headers={
         "Content-Type": "application/json",
         "Authorization": f"Bearer {os.environ['ANTHROPIC_AUTH_TOKEN']}"})
@@ -125,6 +126,15 @@ export CT_LLM_CMD="./ct-llm-direct.py"
 export CT_LLM_DIRECT_MODEL="<the model name your endpoint expects>"
 ./generate.sh
 ```
+
+**The wrapper defaults to `temperature=0`, and that default is load-bearing, not cosmetic.**
+Regenerating five times in a row against `local-devstral-small2` at `temperature=0` produced the
+same handler byte-for-byte four times out of five — the one outlier differed only in comment
+wording, not in the logic the property gates actually check. The same experiment without a fixed
+temperature has no such floor: nothing stops two runs from picking genuinely different (if each
+individually gate-passing) strategies, which turns "does my spec work against this model" into a
+moving target. Override it with `CT_LLM_DIRECT_TEMPERATURE` only if you have a specific reason to
+want sampling variance back.
 
 **One quoting trap worth knowing about in advance:** `generate.sh` invokes `"$LLM" -p "$PROMPT" …`
 with `$LLM` double-quoted. A `CT_LLM_CMD` containing a space — a wrapper path with a `--model` flag
@@ -198,9 +208,10 @@ anything.
   how often a generated handler violates a contract rule, that rate moves with `temperature` and
   `top_p` before it moves with the model. The Claude Code CLI sends no sampling parameters at all —
   both sides run on their own server-side defaults, which you can't equalise through this path. Label
-  results as a statement about *this deployment*, not *this model*; if you can set temperature at the
-  proxy, running the same series at two or three values tells you whether the deployment caveat
-  actually matters or can be set aside.
+  results as a statement about *this deployment*, not *this model*. The wrapper above sets
+  `temperature=0` by default for exactly this reason — pin it before you draw any conclusion from a
+  handful of runs, or every "it worked" / "it didn't" you observe is entangled with which sample you
+  happened to draw.
 
 None of this makes the exercise pointless — it means the label on your numbers has to say what
 actually varied. [When the measurement lies]({{ '/explanation/when-the-measurement-lies/' | relative_url }})
