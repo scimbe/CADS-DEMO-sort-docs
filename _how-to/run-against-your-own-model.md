@@ -6,6 +6,11 @@ order: 4
 
 # Run it against your own model
 
+**The harness, precisely:** the move contract, your `AGENTS.md`, `generate.sh` itself (including
+*which* command it hands your spec to), and the three property gates — laid out in full on
+[The harness is the variable]({{ '/explanation/the-harness-is-the-variable/' | relative_url }}).
+Read that first if "the harness" isn't yet a concrete thing to you; everything below assumes it is.
+
 Everything else on this site holds the model constant and varies the harness. This page does the
 opposite in one respect only: it swaps out **where the model lives**, and changes nothing else.
 
@@ -182,14 +187,18 @@ truncated for no reason the specification explains.
 4. **Take it online.** From here, going live is identical to every other participant on this site —
    follow [Join as a participant]({{ '/how-to/join-as-a-participant/' | relative_url }}) exactly as
    written. The model behind your handler doesn't change that flow at all. A real result from doing
-   exactly this:
+   exactly this, wrapper and `temperature=0` included:
    ```
-   comparisons=0  swaps=35  faults=0  rounds=36  wall=4.2s  sorted=yes
+   comparisons=0  swaps=24  faults=0  rounds=25  wall=3.0s  sorted=yes
    ```
-   `rounds = comparisons + swaps + 1` → `36 = 0 + 35 + 1` — the same accounting identity every
+   `rounds = comparisons + swaps + 1` → `25 = 0 + 24 + 1` — the same accounting identity every
    participant on this site is measured against. A handler generated entirely by a self-hosted
    model, through a harness with the vendor CLI's own framing removed from the loop, sorted a real
-   array correctly in the real hosted arena.
+   array correctly in the real hosted arena — and did it again, on a second array with a different
+   inversion count, without touching `AGENTS.md` between the two runs:
+   ```
+   comparisons=0  swaps=30  faults=0  rounds=31  wall=3.2s  sorted=yes
+   ```
 
 ## Measuring it without fooling yourself
 
