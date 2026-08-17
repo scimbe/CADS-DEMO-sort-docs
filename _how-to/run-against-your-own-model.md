@@ -1,6 +1,6 @@
 ---
 title: Run it against your own model
-description: The whole harness pointed at a self-hosted LLM instead of a vendor API — the hardest version of this exercise. First real attempt: three of five models down, the fourth blocked by the generation wrapper, not the spec.
+description: The whole harness pointed at a self-hosted LLM instead of a vendor API — the hardest version of this exercise. Root cause now isolated: the CLI's `thinking` field, unsupported by the local model, breaks every generation call.
 order: 4
 ---
 
@@ -150,6 +150,57 @@ step — for whoever picks this back up — is not another `AGENTS.md` iteration
 whether the wrapper's system prompt can be trimmed or swapped for something this size of model can
 follow, and separately, whether the endpoint's reasoning-verbosity default can be turned down for a
 task this constrained.
+
+## The update after the operator's fix, and the actual root cause
+
+The report above got a response: `local-devstral-small2` now loads. Direct calls against it succeed —
+three serial `/v1/chat/completions` requests, three `HTTP 200`s, all under a second. That confirmed,
+the obvious next move was to re-test the CLI path this exercise actually depends on.
+
+**It still fails, reproduced four times in a row, identically.** `claude --model local-devstral-small2
+-p "..."` returns `[heartbeat-proxy] upstream error: upstream 500` on every one of four serial
+attempts, each taking about 20 seconds before failing. Four is a small number by this site's own
+standard — see [case 8]({{ '/explanation/when-the-measurement-lies/' | relative_url }}#8-a-noisy-instrument-three-confident-stories)
+— but a flaky failure would show some variation in timing or message, and this showed none. A
+uniform, immediate, identically-worded failure across independent invocations is closer to
+deterministic behavior than to noise, so four was enough to stop guessing and go isolate the cause
+rather than run a fifth.
+
+**The cause is no longer a hypothesis.** A local capture server placed in front of the CLI (same
+technique as the sampling-parameters finding below) confirmed the CLI talks to `/v1/messages?beta=true`
+— the Anthropic-native endpoint, not the OpenAI-compatible one the earlier direct tests used — and
+sends `thinking`, `output_config`, and `context_management` on every call, unconditionally. That much
+was already suspected. What had not been tested was which of those fields actually breaks the request,
+versus the path itself being unsupported for this model.
+
+Two direct calls to the endpoint's own `/v1/messages?beta=true`, otherwise identical, isolate it:
+
+| Call | Body | Result |
+|---|---|---|
+| Minimal | `model`, `max_tokens`, `messages` only | `HTTP 200` — model answers correctly |
+| CLI-equivalent | same, plus `thinking`, `output_config`, `context_management` | `HTTP 500` |
+
+The `500` carries its own explanation, from LiteLLM rather than from guesswork:
+
+```
+litellm.APIConnectionError: Ollama_chatException - {"error":"\"devstral-small-2-agentic:24b\"
+does not support thinking"}
+```
+
+**So: the endpoint's underlying Ollama model does not support the `thinking` parameter, the Claude
+Code CLI sends that parameter on every request with no way to omit it, and LiteLLM's fallback chain
+does not recover — it just reports the upstream failure.** This is not a wrapper problem in the vague
+sense the earlier section left it in; it is one named field, rejected by one named model, one layer
+down from where the CLI's request enters the proxy. Nothing about `AGENTS.md` was ever going to reach
+this — the earlier conclusion, that the failure sits below the specification layer, holds, and now has
+a mechanism instead of a control-arm inference behind it.
+
+This has been filed as an update to
+[CADS-DEMO-local-llm#1](https://github.com/scimbe/CADS-DEMO-local-llm/issues/1), with the reproduced
+failure rate, the isolating pair of calls, and the exact LiteLLM error, and a direct question back to
+the operator: is `thinking`-stripping or a `does-not-support-thinking` capability flag something
+LiteLLM or the proxy in front of it can apply per-model, so a `thinking`-only CLI like this one can
+still be routed to a model that cannot honor it?
 
 ## Measuring it without fooling yourself
 
