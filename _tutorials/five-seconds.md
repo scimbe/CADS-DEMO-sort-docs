@@ -325,7 +325,7 @@ participant id and a display label, submit, and the grant comes back on the firs
 
 Two things to get right, because both cost a fresh start if you don't:
 
-- **Copy the whole `.env` block immediately, and finish on this machine.** The grant is delivered
+- **Copy the whole serve block immediately, and finish on this machine.** The grant is delivered
   once. Your private keys live in this browser's local storage and nowhere else, so re-opening the
   page elsewhere mints a *different* identity that the grant does not match.
 - **If you lose it, submit again under a new participant id.** Your browser keeps the same identity;
@@ -354,22 +354,24 @@ chmod +x ct-agent
 There is **no FreeBSD asset**; see [Join as a participant]({{ '/how-to/join-as-a-participant/' | relative_url }})
 for what to do there.
 
-**Wire it to your handler.** Paste the `.env` block from the join page into `env.sh` next to your
-handler, then:
+**Wire it to your handler.** The join page's serve block already does the wiring — it's not a
+`.env` file to load separately, it's a literal shell transcript: a dozen `export` lines followed by
+the actual `ct-agent channel` command that starts serving, all in one piece. One of those exports,
+`CT_AGENT_SERVICE_HANDLER_CMD`, is already set to your handler by the page — that line is the whole
+link between the tunnel and your sorter: it tells `ct-agent` **which program to hand each round
+input to**. The arena calls the tunnel, the tunnel calls your `handler.sh`, and your handler's one
+line of JSON goes back the same way. Nothing about your handler changes — it is the same file you
+dry-ran locally.
+
+Copy the whole block from the join page and either paste it straight into your terminal, in
+`/path/to/mysorter`, or save it as a script first if you want to keep or review it:
 
 ```bash
 cd /path/to/mysorter            # your participant directory again
-chmod 600 env.sh                # it contains your private keys
-set -a; . ./env.sh; set +a      # load every CT_* variable into this shell
-export CT_AGENT_SERVICE_HANDLER_CMD="$PWD/handler.sh"
-export CT_CHANNEL_SERVE=1
-./ct-agent channel
+# paste the block into serve.sh, then:
+chmod 600 serve.sh              # it contains your private keys
+bash serve.sh                   # runs every export, then ct-agent channel — no source, no separate step
 ```
-
-That middle line is the whole link between the tunnel and your sorter:
-`CT_AGENT_SERVICE_HANDLER_CMD` tells `ct-agent` **which program to hand each round input to**. The
-arena calls the tunnel, the tunnel calls your `handler.sh`, and your handler's one line of JSON goes
-back the same way. Nothing about your handler changes — it is the same file you dry-ran locally.
 
 The first log line is the one that matters:
 
