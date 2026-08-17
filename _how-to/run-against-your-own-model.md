@@ -1,6 +1,6 @@
 ---
 title: Run it against your own model
-description: The whole harness pointed at a self-hosted LLM instead of a vendor API — the hardest version of this exercise. The operator's `thinking`-field fix landed and was verified; a second, different blocker (CLI output truncation) surfaced immediately behind it.
+description: The whole harness pointed at a self-hosted LLM instead of a vendor API — the hardest version of this exercise. The operator's `thinking`-field fix landed and was verified; a second blocker surfaced immediately behind it, and the first theory about its cause (a shared output-token budget) was measured and retracted.
 order: 4
 ---
 
@@ -255,10 +255,41 @@ exposed `--max-tokens` flag on the CLI to test directly.
 `dryrun.py` and no property-check pass rate exists to report.** This is filed as a new comment on
 [CADS-DEMO-local-llm#1](https://github.com/scimbe/CADS-DEMO-local-llm/issues/1) rather than folded
 into "still broken": the previous blocker is genuinely closed (thank you, verified independently), and
-this one is a different layer with different evidence — a max-tokens allocation for locally-hosted
-models, not a `thinking`-support gap. It is not a specification problem either, for the same reason the
-`thinking` bug wasn't: the same `AGENTS.md`, sent without the CLI in the way, produces a correct
-program.
+this one is a different layer with different evidence. It is not a specification problem either, for
+the same reason the `thinking` bug wasn't: the same `AGENTS.md`, sent without the CLI in the way,
+produces a correct program.
+
+### Correction: the shared-token-budget theory above does not hold for the path that matters
+
+The paragraph above reasoned from `--bare` mode's behavior (a real, on-topic response cut off
+mid-sentence) to a general "shared output budget" explanation, and applied it to the plain
+`generate.sh` path too. That extrapolation was checked directly and does not survive:
+
+```json
+"maxOutputTokens": 32000, "output_tokens": 9, "stop_reason": "end_turn", "result": "list"
+```
+
+That's the actual response object from re-sending the identical 5577-character `generate.sh` prompt
+to `local-devstral-small2` through the CLI, in JSON output format, on the plain (non-`--bare`) path —
+the one `generate.sh` itself actually uses. 32,000 output tokens were available. Nine were spent.
+The model stopped **cleanly** (`end_turn`, not a max-tokens cutoff) after producing "list" — the same
+word, the same output, seen twice now, with room to spare. There is no truncation here to explain
+with a budget theory; the model answered briefly and wrongly, then considered itself done.
+
+Also checked and ruled out: `CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT=1` — a flag that
+looked like exactly the right lever, since it exists to turn off the CLI's conservative behavior for
+unrecognized models — made no difference. Same nine tokens, same "list", same clean stop.
+
+What's left standing, unretracted: the control-arm evidence that the identical prompt content,
+sent directly to the endpoint with no CLI in the way, produces a complete and correct handler. So
+the CLI genuinely is the variable — just not through its output-token budget. The likely remaining
+candidate is the CLI's own large system prompt and tool-use scaffolding (the part that makes it
+"Claude Code" rather than a bare completion client), which this model was never trained against and
+may be short-circuiting on rather than following. Worth checking next, not yet checked: what the
+`--bare` run's own response object looks like in JSON (`stop_reason`, `output_tokens` vs. its own
+`maxOutputTokens`) — if that one truly hit a max-tokens stop while this one didn't, the two failures
+are not even the same bug wearing two faces, and conflating them (as the paragraph above did) cost
+a false lead.
 
 ## Measuring it without fooling yourself
 
@@ -389,10 +420,10 @@ twice now, against two different blockers — see
 [What actually happened when I ran it](#what-actually-happened-when-i-ran-it) and
 [The fix landed](#the-fix-landed--verified-and-immediately-followed-by-a-different-blocker). The
 first blocker (three models down, the fourth's `thinking` field rejected server-side) is closed and
-verified independently. The second — the CLI truncating `local-devstral-small2`'s response before
-real code appears, evidenced by the identical prompt completing cleanly outside the CLI — is not.
-Step 2 still has not produced a compiling handler, so steps 3 and 4 remain undone. Getting to step 3
-from here needs either a larger output-token allocation from the CLI/proxy side for this model, or a
-way to trim the padding (hooks, hidden system prompt) that competes with the response for that
-budget — not another `AGENTS.md` rewrite; the control-arm call already showed the specification is
-not what's failing.
+verified independently. The second — originally filed as a shared-output-token-budget theory — was
+**retracted after direct measurement**; see the correction below the section it lives in. Step 2
+still has not produced a compiling handler, so steps 3 and 4 remain undone. What's actually needed
+from here is not a token-budget knob but an answer to why the CLI's own scaffolding — a large
+Anthropic-authored system prompt plus tool-use framing the model was never trained on — makes this
+model answer badly where the identical prompt, sent bare, does not. Not another `AGENTS.md`
+rewrite either way; the control-arm call already showed the specification is not what's failing.
