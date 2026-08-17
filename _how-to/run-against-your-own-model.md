@@ -502,8 +502,9 @@ retracted-then-correctly-diagnosed CLI framing issue worked around with a direct
 wrapper) — both are recorded above rather than smoothed over, because the corrections are as much
 the point of this page as the eventual success. Step 3 (comparing gates against the vendor-API run)
 is implicitly done: same reference `AGENTS.md`, same optimal `swaps == inversions` result, no
-spec change needed. **Step 4 — taking this online — was attempted and is blocked on something
-outside the harness entirely: identity and generation are both solved, joining is not.**
+spec change needed. **Step 4 — taking this online — was attempted twice, got one layer further the
+second time, and is blocked on something outside the harness entirely: identity, generation, and
+login are all solved; being allow-listed as the owner of a specific channel is not.**
 
 A fresh member identity was minted CLI-side (`ct-agent channel init`, no browser needed), and the
 join request body — `{you, holderPub, noisePub, attestation}` — was assembled with
@@ -512,5 +513,25 @@ POSTing it directly to `/api/join-requests` returns `302` to
 `bunsenbrenner.org/gate/start?...&return=%2Fapi%2Fjoin-requests`, which itself `303`s into a real
 OIDC login. `channel-info`'s own `"gateAuthenticated": false` confirms it: this endpoint requires an
 authenticated session, and the identity-minting and request-signing steps above — everything the
-*harness* controls — cannot produce one. That needs an actual login on this gate, which is a human
-step, not a technical one. Filed as the honest remaining gap rather than worked around.
+*harness* controls — cannot produce one.
+
+**The login step itself, once actually performed, closed cleanly and immediately surfaced the real
+remaining blocker — one layer further in than expected.** Signed in through the real Keycloak flow
+(`join.html`'s own login form) with a genuine account; the portal confirms a distinct, valid subject
+(`bunsenbrenner.org/portal/home` → "Signed in, Subject: …"). Submitting the join request from that
+authenticated session gets past the login wall entirely and fails one step later, on the server's own
+side, with a specific and legible reason:
+
+```
+automated approval failed: POST /me/channels -> 403 channel owned by another subject
+```
+
+Tried twice, with two different participant ids (`devstral-online`, `devstral-online-2`) — identical
+error both times, which rules out a name collision as the cause. This account is a real, valid
+CADS-Tunnel identity; it is simply not the one that owns (or is allow-listed against) this specific
+arena channel, and the portal's own channel list confirms it — no claimable channel shows up for
+this subject at all. That is an account-provisioning fact, not something a retry, a different
+participant id, or anything else on the harness side can produce. Filed as the honest remaining gap:
+identity, generation, and now login are each individually solved; what is missing is one specific
+account being granted ownership of (or allow-listed against) this arena's channel — an operator-side
+step, the same category as the `thinking`-field fix and the model repairs earlier on this page.
