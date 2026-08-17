@@ -95,12 +95,25 @@ Now watch it work. Two servers — the bridge answers the API, a static server s
 ```bash
 cd "$REPO"
 export SORT_PARTICIPANTS_JSON='[{"you":"mysorter","label":"My sorter","cmd":"../mysorter/handler.sh"}]'
+export SORT_BRIDGE_LISTEN=127.0.0.1:8789
 node bridge/server.js &
-python3 -m http.server 8000 &
+python3 -m http.server 8000 --bind 127.0.0.1 &
 ```
+
+Both binds are explicit on purpose. Neither server needs anything beyond your own machine for this
+tutorial, and their defaults (`0.0.0.0`) would otherwise put both on your network — reachable by
+anyone else on the same Wi-Fi, not just you.
 
 Both servers run from the clone, which is why the `cd` is there; `cmd` is resolved relative to it,
 so `../mysorter/handler.sh` points back at your directory. Return with `cd ../mysorter` afterwards.
+
+**Open a new terminal for that `cd ../mysorter` and everything after it — the coding-agent CLI in
+particular.** The `&` above backgrounds both servers in *this* terminal, not in a separate session.
+Ctrl-C here still only targets the foreground job, but closing this terminal, or a shell that treats
+a stuck `generate.sh`/`claude` call and its backgrounded siblings as one job on interrupt, takes the
+arena down with it — and the next command in this tutorial re-opens the same page expecting it to
+still answer. A second terminal removes the question entirely: this one just runs the two servers
+and you leave it alone.
 
 Then open **`http://127.0.0.1:8000/index.html?bridge=http://127.0.0.1:8789`** and hit *Solo run*.
 
@@ -112,16 +125,26 @@ different origins. Without it the page assumes same-origin. Full detail in
 
 ## 0:10 — Now make it yours
 
-Nothing above involved a model. That changes now. Describe your strategy in your own words — no
-algorithm name required — in `AGENTS.md`, next to the scripts you just copied:
+Nothing above involved a model. That changes now.
 
-```markdown
+**Do this in the new terminal from the step above, inside `mysorter/`** — the same directory that
+has `handler.sh` and `generate.sh` in it, not the clone. If this is a different terminal than the
+one that created it, or you're not sure where you are, run the re-entry check from "Where you are,
+and how to get back" (0:01, above) first. Then create the file at exactly `mysorter/AGENTS.md` —
+next to `generate.sh`, not inside `generated/`:
+
+```bash
+cat > AGENTS.md <<'EOF'
 # mysorter
 
 ## Strategy
 Scan the array left to right comparing each adjacent pair; if a pair is out of
 order, swap it immediately; once a full pass produces no swaps, it is sorted.
+EOF
 ```
+
+Describe your own strategy in your own words — no algorithm name required. The block above is only
+the example; typing or pasting it verbatim gets you the same adjacent-swap handler you already have.
 
 ### What actually generates the code
 

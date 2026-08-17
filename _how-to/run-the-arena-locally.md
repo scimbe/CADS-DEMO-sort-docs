@@ -37,9 +37,16 @@ export SORT_PARTICIPANTS_JSON='[
   {"you":"my-handler","label":"My handler","cmd":"./participants/my-handler/handler.sh"},
   {"you":"reference-sorter","label":"Reference (insertion sort)","cmd":"./handlers/reference-sorter.sh"}
 ]'
+export SORT_BRIDGE_LISTEN=127.0.0.1:8789
 node bridge/server.js
-# sort-arena-bridge listening on 0.0.0.0:8789, 2 participant(s) configured
+# sort-arena-bridge listening on 127.0.0.1:8789, 2 participant(s) configured
 ```
+
+`SORT_BRIDGE_LISTEN` is worth setting explicitly. Left unset, `bridge/server.js` defaults to
+`0.0.0.0:8789` — fine for the operator's production deployment behind Caddy, but for this local,
+zero-dependency path it means anyone else on your network can reach an API that will happily run
+whatever handler `cmd` you configured. Binding to `127.0.0.1` keeps it to your own machine, which is
+all this page needs.
 
 `SORT_PARTICIPANTS_JSON` takes the exact same shape as the operator-curated
 `SORT_PARTICIPANTS_FILE` — an array of `{"you", "label", "cmd"}` objects, `cmd` any executable that
