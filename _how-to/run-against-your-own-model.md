@@ -1,6 +1,6 @@
 ---
 title: Run it against your own model
-description: The whole harness pointed at a self-hosted LLM instead of a vendor API — the hardest version of this exercise. Root cause now isolated: the CLI's `thinking` field, unsupported by the local model, breaks every generation call.
+description: The whole harness pointed at a self-hosted LLM instead of a vendor API — the hardest version of this exercise. The operator's `thinking`-field fix landed and was verified; a second, different blocker (CLI output truncation) surfaced immediately behind it.
 order: 4
 ---
 
@@ -202,6 +202,64 @@ the operator: is `thinking`-stripping or a `does-not-support-thinking` capabilit
 LiteLLM or the proxy in front of it can apply per-model, so a `thinking`-only CLI like this one can
 still be routed to a model that cannot honor it?
 
+## The fix landed — verified, and immediately followed by a different blocker
+
+The operator's answer, in full, because the fix itself is worth recording precisely rather than
+paraphrased: the original guess (`supports_reasoning: false`) never actually took effect — tracing it
+through LiteLLM's own source showed why — and the real fix was
+`additional_drop_params: ["thinking", "reasoning_effort"]` set on every local model. **Both parameter
+names had to be dropped explicitly; setting only one was not enough.** Verified on the operator's side
+against live `thinking`-bearing requests across all five affected models before being reported fixed.
+
+Verified again independently, from this side, before trusting it: `claude --model
+local-devstral-small2 -p "Reply with exactly one word: pong"` — a request shaped exactly like the ones
+that failed with `heartbeat-proxy upstream 500` four times in a row — now returns `pong` in about ten
+seconds, clean. The `thinking` blocker is closed.
+
+**Re-running the actual generation step immediately surfaced a second, unrelated failure — and it is
+worth walking through why it looked identical to the first for about thirty seconds before it wasn't.**
+Five serial `generate.sh` runs against `local-devstral-small2`, same procedure as before: all five
+returned the literal single word `list` — `py_compile`-clean (one identifier is valid Python), useless
+as a handler, and, at first glance, the same shape of failure as the `thinking` bug just closed: a
+short, stereotyped non-answer from behind the CLI wrapper. It was not the same bug, and the site's own
+rule from [case 5]({{ '/explanation/when-the-measurement-lies/' | relative_url }}#5-measuring-the-wrapper-blaming-the-language)
+— ask what else changed before you accept the first explanation — is what kept this from being
+mis-filed as a `thinking` regression.
+
+What actually changed: adding `--bare` (skips CLAUDE.md auto-discovery, hooks, plugin sync — everything
+that pads the assistant's own context before your prompt even arrives) turned the one-word `list` into
+a real, on-topic response — the model correctly restating the bubble-sort strategy from `AGENTS.md` and
+starting to reason about the implementation — but that response still cut off mid-sentence, at *"Here's
+the implementation:"*, with no code following. Two different truncation points from two different
+amounts of padding ahead of the prompt is the signature of a **shared token budget**, not of the model
+failing to understand the task.
+
+The control arm that confirmed it: the exact prompt `generate.sh` builds, sent directly to
+`/v1/chat/completions` with `max_tokens: 4000` and nothing else — no CLI, no system prompt, no tool
+scaffolding. `finish_reason: stop`. A complete, correct 30-line handler came back: reads the round
+input, handles `correction`, walks the array, emits `swap`/`done` moves matching the spec. The model can
+do this task. It cannot do it inside whatever output budget the Claude Code CLI is actually allocating
+it for an "unrecognized model" — a budget small enough that even a modest explanatory preamble, which
+this model reliably produces despite the prompt's explicit "no prose before or after" constraint,
+consumes it before the code appears.
+
+Two follow-up attempts, in the interest of finding a workaround from this side before calling it
+someone else's problem: appending `[1m]` to the model name (the CLI's own suggested fix for an
+under-recognized context window) made no difference — same cutoff, same sentence. `--effort low`, tried
+next, did not return within seventy seconds against an endpoint that had, by that point, absorbed a
+dozen back-to-back exploratory calls in this same session; that reads as the serialization confounder
+this page already documents below, not as a third distinct bug, and was not chased further. There is no
+exposed `--max-tokens` flag on the CLI to test directly.
+
+**No handler compiled to something usable, so — same as the last round — nothing reached
+`dryrun.py` and no property-check pass rate exists to report.** This is filed as a new comment on
+[CADS-DEMO-local-llm#1](https://github.com/scimbe/CADS-DEMO-local-llm/issues/1) rather than folded
+into "still broken": the previous blocker is genuinely closed (thank you, verified independently), and
+this one is a different layer with different evidence — a max-tokens allocation for locally-hosted
+models, not a `thinking`-support gap. It is not a specification problem either, for the same reason the
+`thinking` bug wasn't: the same `AGENTS.md`, sent without the CLI in the way, produces a correct
+program.
+
 ## Measuring it without fooling yourself
 
 A self-hosted endpoint is usually **one GPU behind a queue**, and that changes which numbers mean
@@ -326,11 +384,15 @@ thing you swapped is the part everyone assumes is decisive.
 4. Then take it online. A participant generated by your own model, answering rounds over a real
    channel, is the complete version of this exercise.
 
-**Where this stands against the worked target above:** step 1 and step 2 have been run for real —
-see [What actually happened when I ran it](#what-actually-happened-when-i-ran-it). Step 2 did not
-produce a compiling handler, so steps 3 and 4 have not happened yet. The blocker was diagnosed, not
-just hit: three of five models are currently down at the endpoint (reported upstream), and the
-fourth fails specifically inside the Claude Code CLI's generation wrapper, not at the specification
-layer — confirmed by a direct-API control call that the wrapped call does not make. Getting to step
-3 from here needs the endpoint's models restored and something to change about the wrapper or the
-model's reasoning-verbosity settings, not another spec rewrite.
+**Where this stands against the worked target above:** step 1 and step 2 have been run for real,
+twice now, against two different blockers — see
+[What actually happened when I ran it](#what-actually-happened-when-i-ran-it) and
+[The fix landed](#the-fix-landed--verified-and-immediately-followed-by-a-different-blocker). The
+first blocker (three models down, the fourth's `thinking` field rejected server-side) is closed and
+verified independently. The second — the CLI truncating `local-devstral-small2`'s response before
+real code appears, evidenced by the identical prompt completing cleanly outside the CLI — is not.
+Step 2 still has not produced a compiling handler, so steps 3 and 4 remain undone. Getting to step 3
+from here needs either a larger output-token allocation from the CLI/proxy side for this model, or a
+way to trim the padding (hooks, hidden system prompt) that competes with the response for that
+budget — not another `AGENTS.md` rewrite; the control-arm call already showed the specification is
+not what's failing.
