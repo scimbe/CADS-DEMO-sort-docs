@@ -204,7 +204,7 @@ arena:** verify it points at [Join as a participant]({{ '/how-to/join-as-a-parti
 and not at hand-editing a bridge config file — the self-service waiting room described there is
 the only real path today; anything else in a generated README is stale.
 
-## Step 5 — watch it sort
+## Step 4 — watch it sort
 
 Everything above is local verification: `--selftest`, a dry run, determinism, the correction path.
 None of it puts your handler on screen — and the visualization is the actual payoff the homepage
