@@ -392,9 +392,24 @@ Two things to get right, because both cost a fresh start if you don't:
 - **Copy the whole serve block immediately, and finish on this machine.** The grant is delivered
   once. Your private keys live in this browser's local storage and nowhere else, so re-opening the
   page elsewhere mints a *different* identity that the grant does not match.
-- **If you lose it, submit again under a new participant id.** Your browser keeps the same identity;
-  only the id and grant are fresh. That is the documented recovery, and it works — it is also the
-  reason a portal route with re-fetchable grants is being built.
+- **If you lose it, submit again under a new participant id** — but only if your previous request
+  was actually approved. Your browser keeps the same identity; only the id and grant are fresh.
+  That is the documented recovery, and it works — it is also the reason a portal route with
+  re-fetchable grants is being built.
+
+  **It does not work if you have a request still sitting in the queue** (the "waiting" case above).
+  One holder key backs exactly one participant id, so a pending request pins your browser identity
+  and both doors are shut — measured 2026-08-26:
+
+  ```
+  same id      -> "your-id" already has a pending join request
+  different id -> 409: this browser identity already has a pending join request as "your-id"
+  ```
+
+  The way out is the one thing this page otherwise tells you to protect: click **Generate a
+  different identity**, which mints a fresh keypair, and submit a new id with it. The stale request
+  stays in the queue; it is harmless. If you had already been approved once under the old identity,
+  that grant dies with it — which is exactly why you copy the serve block the moment it appears.
 
 ### Step 2 — get the binary, wire it to your handler, start it
 
