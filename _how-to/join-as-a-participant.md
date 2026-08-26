@@ -211,15 +211,26 @@ looks from your seat and what to do about it. No CLI needed for any of this:
 ### If your submission stays "waiting" {#if-your-submission-stays-waiting}
 
 Auto-approval is performed by the bridge itself, but only while the bridge holds a **live
-operator credential** for the control plane ("automation armed"). Since 2026-08-14 this arena
-runs on a **standing service-account credential**: automation is armed at boot and survives
-bridge redeploys, verified end-to-end the same day (a fresh account's submission came back
-`approved` with the grant on the first status poll — including across a redeploy that wiped the
-old-style browser session). Historically the credential was a 30-minute session an operator
-armed by hand, and the "waiting" case below was a routine occurrence; today it indicates a
-deployment running without the service-account tier. Either way, none of this is visible or
-fixable from the join page — what you *can* see is the outcome, in the page's own status line
-right after you submit:
+operator credential** for the control plane ("automation armed"). A standing service-account
+credential is meant to arm automation at boot and survive bridge redeploys — verified end to end
+on 2026-08-14, when a fresh account's submission came back `approved` with the grant on the first
+status poll, across a redeploy that wiped the old-style browser session. Historically the
+credential was a 30-minute session an operator armed by hand, and the "waiting" case below was a
+routine occurrence.
+
+**Do not treat the armed state as a given.** Measured again on 2026-08-26, this arena was serving
+`autoApprove: false` — a signed-in account's submission went to the queue and stayed there, and
+because the operator's approve button requires the same credential, nothing could clear it
+([CADS-DEMO-sort#52](https://github.com/scimbe/CADS-DEMO-sort/issues/52)). None of this is
+fixable from the join page, but two things *are* visible from outside:
+
+```bash
+# https://sort.bunsenbrenner.org/api/whoami   -- in the browser you signed in with
+{"email":"you@example.org","autoApprove":true}    # armed; submit and your grant arrives
+{"email":"you@example.org","autoApprove":false}   # not armed; nobody can approve you right now
+```
+
+Check it before you submit, and read the page's own status line right after you do:
 
 - **"Approved automatically … fetching your grant…"** — the normal case. Automation was armed,
   approval already happened inline with your submit, and the page's status poll (every 4 s)
@@ -238,11 +249,16 @@ right after you submit:
   your keys caused it, and retrying won't mint the missing pieces. Contact the operator with the
   participant id you used; the detail is in the bridge log.
 
-### The portal claim page — a second way in, measured
+### The portal claim page — a second way in, measured {#the-portal-claim-page--a-second-way-in-measured}
 
 There is now a second route to the same thing: the platform's own channel portal, where a grant is
-**deposited server-side and re-fetchable** instead of shown once and gone. It exists because of the
-failure mode described above, and it removes it.
+**deposited server-side and re-fetchable** instead of shown once and gone. It removes the
+*one-shot-delivery* failure — losing the block before you copied it.
+
+It does **not** remove the "waiting" case above, and it is not a way around it. The portal lists
+channels that already exist; the channel is created by the same approval automation. With
+`autoApprove: false` the page is simply empty — measured 2026-08-26: *"No channel invitations
+yet."* for an account whose join request had been queued and verified minutes earlier.
 
 The path is: sign in, open `bunsenbrenner.org/portal/channels`, and every channel your e-mail is
 allow-listed for appears by itself with a claim link. Click *Claim membership*, the owner (or an

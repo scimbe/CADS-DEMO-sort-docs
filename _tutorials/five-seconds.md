@@ -326,6 +326,10 @@ Everything so far ran on your machine. Three steps put the same handler on
 `sort.bunsenbrenner.org`, where anyone can race it. **They took 16 seconds measured**, and none of
 them touches your code — the handler you already verified is the one that goes online.
 
+Unlike everything above, this section depends on a live service you do not control. It is the one
+part of this page that can fail for reasons that have nothing to do with your setup — Step 1 says
+how to tell, in one request.
+
 ### Step 0 — you need an account, and you can make one yourself
 
 `join.html` sits behind the deployment's sign-in, so before anything else you need a login. There is
@@ -343,13 +347,45 @@ Verified by creating one today.
 ### Step 1 — `join.html` gives you a grant
 
 Back on **[join.html](https://sort.bunsenbrenner.org/join.html)**, your signed-in account *is* the
-authorisation — there is no waiting room.
+authorisation: when the arena's approval automation is armed, there is no operator to wait for.
 
 The page generates a channel identity **in your browser**: a holder keypair and a noise keypair.
 The private halves never leave it; only the public halves plus a signature are submitted. Fill in a
 participant id and a display label, submit, and the grant comes back on the first status poll.
 
-**Measured: 4.6 s** from submit to a grant in hand.
+**Measured: 4.6 s** from submit to a grant in hand — on a day the automation was armed.
+
+Read the line the page prints right after you submit, because it tells you which of two
+different situations you are in:
+
+- **"Approved automatically … fetching your grant…"** — the normal case. Continue below.
+- **"Request submitted. Waiting for an operator to review it…"** — the arena's automation is not
+  armed at the moment. **This is not something you can fix, and nothing about your setup caused
+  it.** Your request was cryptographically verified and queued, but nothing will approve it until
+  the operator side comes back, and the page will poll indefinitely. Do not resubmit; see
+  [If your submission stays "waiting"]({{ '/how-to/join-as-a-participant/#if-your-submission-stays-waiting' | relative_url }}).
+
+You can tell the two apart *before* submitting, in the same browser you signed in with:
+
+```bash
+# https://sort.bunsenbrenner.org/api/whoami
+{"email":"you@example.org","autoApprove":true}    # a grant arrives on the first poll
+{"email":"you@example.org","autoApprove":false}   # this deployment cannot approve anyone right
+                                                  # now -- neither automatically nor by an
+                                                  # operator clicking Approve
+```
+
+`autoApprove: false` is worth knowing up front rather than discovering after fifteen minutes of
+polling: when it is false, the operator's own approve button fails too, so waiting longer does not
+help. Measured on 2026-08-26, when the whole hosted-arena section of this page was unreachable for
+exactly this reason ([CADS-DEMO-sort#52](https://github.com/scimbe/CADS-DEMO-sort/issues/52)). The
+[portal claim route]({{ '/how-to/join-as-a-participant/#the-portal-claim-page--a-second-way-in-measured' | relative_url }})
+is not a way around it — it lists the channel the same automation would have created, so it shows
+nothing at all in this state.
+
+Everything before this step runs entirely on your own machine and is unaffected: a local arena is
+the full experience minus the racing, and [Run the arena locally]({{ '/how-to/run-the-arena-locally/' | relative_url }})
+is the way to keep working while the hosted one is down.
 
 Two things to get right, because both cost a fresh start if you don't:
 
@@ -444,7 +480,7 @@ route and what to do when something does not come up, is in
 |---|---|---|
 | Clone to running participant | 1–2 s | nothing — deterministic |
 | Generating your own strategy | 25–472 s, median 130 s | one model call |
-| Joining the hosted arena and answering a round | 16 s | nothing — deterministic |
+| Joining the hosted arena and answering a round | 16 s | the arena's approval automation being armed — [check it](#step-1--joinhtml-gives-you-a-grant) |
 | Forcing and proving a property | 1 spec line | you |
 
 Measured end to end on one continuous run — empty directory to a participant answering rounds from
