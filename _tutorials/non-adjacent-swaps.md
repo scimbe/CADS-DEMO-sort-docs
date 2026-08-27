@@ -118,7 +118,8 @@ same "never actually sends an invalid move, so it never receives a real correcti
 the algorithm]({{ '/tutorials/change-the-algorithm/' | relative_url }}) already explains.
 
 Head-to-head against `handlers/reference-sorter.sh` (real insertion sort), five random 16-element
-seeds, budget disabled:
+seeds, with the budget raised well clear of the runs (`--budget 100000`; there is no
+"disable" flag, and `--budget 0` runs zero rounds):
 
 ```
 | Seed | comb-sort rounds | reference rounds |

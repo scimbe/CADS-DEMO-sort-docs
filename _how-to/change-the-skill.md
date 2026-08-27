@@ -19,7 +19,7 @@ said the right thing and it changed nothing — because nothing checked.
 .claude/skills/sort-arena-harness/SKILL.md
 ```
 
-152 lines of Markdown with two-field frontmatter:
+173 lines of Markdown with two-field frontmatter:
 
 ```yaml
 ---

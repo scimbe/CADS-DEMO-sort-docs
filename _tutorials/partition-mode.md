@@ -25,12 +25,23 @@ segment-local `i`/`j` back to the whole array's real position.
 
 ## A real run against the live arena, verbatim
 
-Three of this repo's shipped participants are currently reachable and working (a self-service
-remote participant, `windows-selection-e2e`, is not, tracked separately on
-[`ct-agent#15`](https://github.com/scimbe/ct-agent/issues/15) — this run deliberately only uses
-participants confirmed live, not a hand-picked example):
+The run below was recorded against three participants that were live at the time. **Do not paste
+it verbatim — the hosted roster changes, and two of these three are no longer on it.** Measured
+2026-08-27: this exact command now answers `HTTP 404`,
+`{"error":"unknown participant \"bubble-sort-claude\""}`.
+
+Read the roster first and substitute live ids:
 
 ```bash
+curl -s https://sort.bunsenbrenner.org/participants          # who is actually live right now
+curl -s -N -X POST "https://sort.bunsenbrenner.org/partition?ids=<id-a>,<id-b>,<id-c>&len=18"
+```
+
+The transcript that follows is kept as a **recorded** run, because what it demonstrates does not
+depend on which participants produced it:
+
+```bash
+# recorded 2026-08-14; ids valid then, not now
 curl -s -N -X POST "https://sort.bunsenbrenner.org/partition?ids=reference-sorter,bubble-sort-claude,algorithm-coached-claude&len=18"
 ```
 
@@ -113,6 +124,18 @@ anyway, unless the values happened to already fall into position-ordered ranges 
 random array, they usually won't.
 
 No live arena needed, either: [Run the arena locally]({{ '/how-to/run-the-arena-locally/' | relative_url }})
-brings up the same bridge on your own machine in about a minute, and the exact `curl` above works
-against `http://127.0.0.1:8789` unchanged — handy when the hosted deployment is down or you just
-don't want to depend on it.
+brings up the same bridge on your own machine in about a minute — handy when the hosted deployment
+is down, or you just don't want to depend on it.
+
+**Two things change locally, and this page used to claim otherwise.** Only the ids *you* configured
+in `SORT_PARTICIPANTS_JSON` exist, so the ids above return the same `404` there; and a participant
+that ships in the repo without a generated handler fails its own selftest until you run
+`generate.sh` for it:
+
+```
+$ ./participants/bubble-sort-claude/handler.sh --selftest
+SELFTEST FAIL: .../generated/handler.py does not exist yet -- run generate.sh first
+```
+
+So locally: configure three ids of your own, and use those. The lesson is about the partition, not
+about which handlers fill it.
