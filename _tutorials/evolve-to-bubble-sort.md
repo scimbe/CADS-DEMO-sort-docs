@@ -90,12 +90,18 @@ set rather than failing somewhere further down.
 {
   "hooks": {
     "PostToolUse": [{
-      "matcher": "Bash(*generate.sh*)",
-      "hooks": [{ "type": "command", "command": "$CLAUDE_PROJECT_DIR/verify.sh" }]
+      "matcher": "Bash",
+      "hooks": [{ "type": "command", "if": "Bash(*generate.sh*)", "command": "$CLAUDE_PROJECT_DIR/verify.sh" }]
     }]
   }
 }
 ```
+
+`matcher` matches the **tool name**, and anything outside `[A-Za-z0-9_,| -]` in it is treated as a
+JavaScript regular expression. `Bash(*generate.sh*)` is permission-rule syntax, not matcher syntax,
+and as a regex it does not even compile — `node -e 'new RegExp("Bash(*generate.sh*)")'` gives
+*"Nothing to repeat"*. A hook configured that way never fires, silently. The command filter belongs
+on the individual handler as `if`, as above. (This page previously printed the non-compiling form.)
 
 Now a regenerated handler that regresses a property **fails loudly at the moment of
 regeneration** — the hook is your referee, and you've just built the same structure the arena
@@ -128,7 +134,7 @@ copy source.
 
 ## Step 4 — Define done, and check reproducibility explicitly
 
-You are done when the goal line passes **on two different seeds, twice each** (that's what the
+You are done when the goal line passes **on two different seeds** (that's what the
 `verify.sh` above encodes). The double run per seed matters: it proves the generated code is
 genuinely deterministic, not a live judgment that went well once — the same distinction the
 first tutorial's dry-run-twice check made, now promoted to a standing gate.

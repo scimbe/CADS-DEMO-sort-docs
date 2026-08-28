@@ -85,8 +85,14 @@ asking for the three things it needs, one at a time if you don't already have th
   your first message instead of waiting to be asked — either way works.
 
 You do not write any code at this step, and you do not hand-edit a prompt. You describe the idea;
-the skill turns it into a real specification (`participants/<your-id>/AGENTS.md`) and, from that,
-into a real program (`participants/<your-id>/generated/handler.py`).
+the skill turns it into a real specification (`AGENTS.md`) and, from that, into a real program
+(`generated/handler.py`).
+
+Both land in **your own project directory, outside the clone** — the skill asks where you want it
+and suggests a sibling of the clone named after your participant id. That is deliberate
+([CADS-DEMO-sort#30](https://github.com/scimbe/CADS-DEMO-sort/issues/30)): your strategy is your
+project, not untracked files in someone else's git tree, and `git pull` in the clone must never
+collide with your work. `git status` in the clone stays empty throughout.
 
 ## Step 3 — expect the first attempt to be checked, not trusted
 
@@ -117,8 +123,10 @@ cycle was needed here.
 
 Main dry run, `--seed 42 --len 8`, array `[82, 15, 4, 95, 36, 32, 29, 18]` → sorted correctly in
 **43 rounds** (25 comparisons, 17 swaps), ~3.2s for the whole run. Also clean on: already-sorted,
-reversed, heavy duplicates, n=2, and — **with `--budget 600`, since a coached bubble sort's real
-worst case at this length is well past `dryrun.py`'s 200 default** (the GUI's own Round Budget
+reversed, heavy duplicates, n=2, and — **with `--budget 600`, because *this* handler is a coached
+bubble sort with no shrink optimization, whose worst case is ~(n-1)² rounds** (not because of the
+array length as such — see [Check yourself]({{ '/tutorials/check-yourself/' | relative_url }}) Q6,
+which retracts the length-based rule; a plain adjacent sorter at n=21 finishes inside 200) (the GUI's own Round Budget
 field defaults to 600 for exactly this reason) — n=21/22/24 (301/278/309 rounds). Running any of
 these three at the 200 default reports `sorted=False`, budget exhausted, not a broken handler.
 ```
@@ -192,17 +200,21 @@ for the full evidence trail this example is drawn from, including what the same 
 
 ## What you'll have when this is done
 
-A directory at `participants/<your-id>/` — spec, generated code, a handler wrapper, and a README
-recording the verification report — plus a short, real report: pass or fail on the contract
-check, pass or fail on the dry run, and, if either failed, what about your spec the failure points
-at. When both pass, you have a program that runs in milliseconds and behaves identically on every
+Your own participant directory, beside the clone rather than inside it — `AGENTS.md`,
+`generated/handler.py`, `handler.sh` and `generate.sh` — plus a short, real report in the session
+itself: pass or fail on the contract check, pass or fail on the dry run, and, if either failed,
+what about your spec the failure points at.
+
+(This page used to promise `participants/<your-id>/` inside the clone, and a README file written
+into it. Neither is what the shipped skill does — measured 2026-08-27, the directory lands outside
+the clone and no README is written.) When both pass, you have a program that runs in milliseconds and behaves identically on every
 call, not a live decision you have to hope goes well each round. That reliability is the actual
 deliverable of this tutorial, not the sorting itself.
 
-**One thing worth checking before you trust a generated README's own claims about how to join the
-arena:** verify it points at [Join as a participant]({{ '/how-to/join-as-a-participant/' | relative_url }})
-and not at hand-editing a bridge config file — the self-service waiting room described there is
-the only real path today; anything else in a generated README is stale.
+**On joining the arena:** the self-service route in
+[Join as a participant]({{ '/how-to/join-as-a-participant/' | relative_url }}) is the only real
+path today. If any generated file or older note tells you to hand-edit a bridge config instead,
+it is stale.
 
 ## Step 4 — watch it sort
 

@@ -20,7 +20,9 @@ separate ones in one 50-minute session).
 
 ## Why this works with zero setup
 
-`bridge/server.js` has no dependencies — `node:http`, `node:fs`, `node:child_process`, nothing
+`bridge/server.js` needs nothing installed — only node builtins (`node:http`, `node:fs`,
+`node:child_process`, `node:crypto`) and two files beside it in the repo (`server.lib.js`,
+`attestation.js`). No `npm install`, no `package.json`, nothing
 else. No `package.json`, no build step, no install. It starts in about a second. It also already
 sets `Access-Control-Allow-Origin: *`, with an explicit comment that the API carries no session or
 secret — the local-bridge override this page describes is an intended, supported path, not
@@ -76,7 +78,7 @@ bridge is same-origin and only falls back to asking for this override when a fet
 file itself (that's Caddy's job in production, per `Caddyfile`), so both servers above are
 genuinely needed — this isn't a workaround for a missing feature, it's the actual shape of the two
 pieces this app is built from. The bridge's own permissive CORS header exists specifically for
-this two-origin case, per its header comment (`bridge/server.js:1010-1014`).
+this two-origin case, per its header comment (`bridge/server.js:1878-1883`).
 
 ## Step 3 — watch it sort
 
