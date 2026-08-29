@@ -13,6 +13,7 @@ coaching) is wrapped around it — not the prompt text.
 
 The live arena is at **[sort.bunsenbrenner.org](https://sort.bunsenbrenner.org/)** — a real,
 running visualization, not a static mockup.
+{% include prov.html kind="measured" how="GET / -> HTTP 200 (Server: Caddy), title 'Sort Arena — same task, same contract, different harness'; re-checked 2026-08-29" %}
 
 ## Start here
 

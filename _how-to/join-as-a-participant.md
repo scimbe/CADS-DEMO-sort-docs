@@ -335,6 +335,7 @@ about, is unaffected**; the change only bites if you *call* a service from a scr
 
 **Platform note.** Binaries exist for macOS (Intel, Apple Silicon), Linux (x86_64, aarch64, i686)
 and Windows (x86_64, aarch64, i686). **There is no FreeBSD build, in this or any release.**
+{% include prov.html kind="measured" how="ct-agent latest release assets: darwin-{aarch64,x86_64}, linux-{aarch64,i686,x86_64}, windows-{aarch64,i686,x86_64}.exe; no *-freebsd-* asset; checked 2026-08-29 (v0.7.10)" %}
 
 That limit was measured rather than assumed. On FreeBSD 14.3 (arm64, in a VM) the whole local path
 runs unchanged and produces the same numbers as macOS and Linux:

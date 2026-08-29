@@ -93,6 +93,7 @@ harness can fail to stay inside the contract just as easily as it can fail to so
   long run.
 - `array` length is capped at a fixed max (default 24) — enough to be visually interesting,
   small enough that even a bad strategy finishes within budget.
+  {% include prov.html kind="audited" how="MAX_ARRAY_LEN = 24 in dryrun.py:73 and bridge/server.js; solo len clamped [2,24]" %}
 
 ## Scoring (what the arena measures and shows per participant)
 
@@ -117,6 +118,7 @@ Earlier versions of this arena had a cooperative "relay" mode (one shared array,
 taking turns). It's gone — retired 2026-08-11 in favor of race and partition modes below, which
 answer the same "how do different harnesses compare" question more directly. `POST /relay` no
 longer exists; a request to it now 404s like any other unknown route.
+{% include prov.html kind="measured" how="POST https://sort.bunsenbrenner.org/relay -> HTTP 404, 2026-08-29" %}
 
 ## Solo mode (a single participant, watched)
 
@@ -127,6 +129,7 @@ race and partition use (`{"stage":"round",...}` per move, a final `{"stage":"fin
 with `finishedCorrectly`/`comparisons`/`swaps`/`faults`/`roundsUsed`), just one participant, one
 array, no pairing. `len` defaults to 8, clamped to `[2, 24]`; `budget` defaults to 200, per the
 usual `?budget=N` override (10-2000).
+{% include prov.html kind="measured" how="POST https://sort.bunsenbrenner.org/run/reference-sorter?len=8 -> HTTP 200, NDJSON stage:start then stage:round events, 2026-08-29" %}
 
 ## Race mode (the direct head-to-head variant)
 
@@ -160,7 +163,8 @@ segment finished perfectly: splitting by position is not the same as splitting b
 concatenating locally-sorted slices only yields a globally sorted array when each slice already
 happened to hold the right value range (real parallel/external sorts need a merge phase afterward,
 which this deliberately does not implement — the point here is watching segments sort
-concurrently, not shipping a working parallel sort). `perParticipant` reports each segment's own
+concurrently, not shipping a working parallel sort).
+{% include prov.html kind="not-built" how="no merge phase after segments finish, by design; final summary reports wholeArraySorted, usually false" %} `perParticipant` reports each segment's own
 `finishedCorrectly`/`roundsUsed`/`comparisons`/`swaps`/`faults`, same fields the other modes use.
 
 ## Talking to a role over Agent-Fabric — inherited, not reinvented

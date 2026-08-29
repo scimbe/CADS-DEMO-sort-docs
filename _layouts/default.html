@@ -42,6 +42,19 @@
  table{border-collapse:collapse;width:100%;margin:1rem 0}
  th,td{border:1px solid var(--border);padding:.4rem .6rem;text-align:left;font-size:.9rem}
  th{background:var(--panel)}
+ /* Provenance markers. measured = live-verified against the running deployment; audited =
+    checked against source or release artifacts; not-built = deliberately absent. The `how`/`why`
+    rides in the title attribute (hover). Applied only to load-bearing live/infra claims -- the
+    prose carries the honest tone on its own; these just make the evidence class legible at a glance
+    where it helps. Teal stays this arena family's "positive" accent, so measured (a confirmed fact)
+    borrows it; audited leans on the page's own indigo; not-built is a muted amber for absence. */
+ .prov{display:inline-block;font-family:var(--mono);font-size:.66em;font-weight:600;
+       letter-spacing:.04em;text-transform:uppercase;padding:.02em .42em;border-radius:4px;
+       border:1px solid;vertical-align:baseline;white-space:nowrap;cursor:help;line-height:1.5;
+       margin:0 .1em}
+ .prov-measured{color:#7fd6c2;border-color:#2f6f63;background:rgba(46,127,115,.13)}
+ .prov-audited{color:#a9b6f0;border-color:#3a4488;background:rgba(90,105,190,.14)}
+ .prov-not-built{color:#d0a670;border-color:#7a5a30;background:rgba(150,110,55,.13)}
  .page-foot{margin-top:3rem;padding-top:1.2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.85rem}
  .index-list{display:flex;flex-direction:column;gap:.1rem;margin-top:1.5rem}
  .index-item{display:block;padding:.9rem 1rem;border:1px solid var(--border);border-radius:8px;

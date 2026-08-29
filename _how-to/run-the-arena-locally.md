@@ -78,7 +78,8 @@ bridge is same-origin and only falls back to asking for this override when a fet
 file itself (that's Caddy's job in production, per `Caddyfile`), so both servers above are
 genuinely needed — this isn't a workaround for a missing feature, it's the actual shape of the two
 pieces this app is built from. The bridge's own permissive CORS header exists specifically for
-this two-origin case, per its header comment (`bridge/server.js:1878-1883`).
+this two-origin case, per its header comment (`bridge/server.js:2089-2095`).
+{% include prov.html kind="audited" how="server.js sets Access-Control-Allow-Origin: * at line 2094; the 'carries no session/cookie/secret' comment is at 2089-2095; checked 2026-08-29" %}
 
 ## Step 3 — watch it sort
 

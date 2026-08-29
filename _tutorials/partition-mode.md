@@ -29,6 +29,7 @@ The run below was recorded against three participants that were live at the time
 it verbatim — the hosted roster changes, and two of these three are no longer on it.** Measured
 2026-08-27: this exact command now answers `HTTP 404`,
 `{"error":"unknown participant \"bubble-sort-claude\""}`.
+{% include prov.html kind="measured" how="GET /participants -> only reference-sorter listed; bubble-sort-claude / algorithm-coached-claude 404, re-checked 2026-08-29" %}
 
 Read the roster first and substitute live ids:
 

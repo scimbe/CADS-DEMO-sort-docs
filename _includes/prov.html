@@ -1,0 +1,17 @@
+{%- comment -%}
+Provenance marker. Usage inside any page:
+  {% include prov.html kind="measured"  how="curl https://sort.bunsenbrenner.org/ -> 200, 2026-08-29" %}
+  {% include prov.html kind="audited"   how="dryrun.py MAX_ARRAY_LEN = 24" %}
+  {% include prov.html kind="not-built" how="no merge phase in partition mode, by design" %}
+
+kind is one of: measured | audited | not-built
+  measured  = live-verified against the running deployment; `how` says how
+  audited   = checked against source / release artifacts; `how` cites what
+  not-built = deliberately absent; `how` says why
+
+Mark ONLY load-bearing claims about live/infra state. Prose already carries the honesty;
+these add a machine-readable class where it buys clarity, not on every sentence.
+{%- endcomment -%}
+{%- assign k = include.kind -%}
+{%- if k == "not-built" -%}{%- assign lbl = "not built" -%}{%- else -%}{%- assign lbl = k -%}{%- endif -%}
+<span class="prov prov-{{ k }}"{% if include.how %} title="{{ include.how | escape }}"{% endif %}>{{ lbl }}</span>
